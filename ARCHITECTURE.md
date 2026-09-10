@@ -179,7 +179,7 @@ Ver README para como rodar. Decisões notáveis:
 
 ## Deploy
 
-<!-- Preencher após o deploy: URL pública + repositório. -->
+### URL: https://junglechallenge.vercel.app/
 
 A aplicação é 100% estática (client-side, sem variáveis de ambiente
 sensíveis) — qualquer host de arquivos estáticos com fallback de SPA
