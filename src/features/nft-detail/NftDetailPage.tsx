@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Minus, Plus, Heart, Share2, Star } from 'lucide-react'
+import { Heart, Linkedin, Mail, Minus, Plus, Star, Twitter, ZoomIn } from 'lucide-react'
 import { Route } from '@/routes/nft.$nftId'
 import { useNftQuery, useRelatedNftsQuery } from '@/lib/api/nfts'
 import { useSessionQuery } from '@/lib/api/auth'
@@ -9,14 +9,21 @@ import { useAddToCartMutation } from '@/lib/api/cart'
 import { NftArt } from '@/components/nft/NftArt'
 import { ProductCard } from '@/features/catalog/ProductCard'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NotFound } from '@/components/layout/NotFound'
 import { formatEth } from '@/lib/format'
 import { CATEGORY_LABELS, NETWORK_LABELS } from '@/mocks/fixtures'
 import { KurioApiError } from '@/lib/api/client'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+
+/**
+ * A galeria do Figma tem quatro vistas da peça, mas a API expõe um único
+ * `seed` por NFT — as vistas são derivadas dele, mantendo a paleta do token e
+ * a mesma decisão de arte procedural usada no catálogo (ver NftArt).
+ */
+const VIEW_OFFSETS = [0, 7, 13, 29]
 
 export function NftDetailPage() {
   const { nftId } = Route.useParams()
@@ -28,24 +35,32 @@ export function NftDetailPage() {
   const toggleFavorite = useToggleFavoriteMutation()
   const addToCart = useAddToCartMutation()
   const [quantity, setQuantity] = useState(1)
+  const [activeView, setActiveView] = useState(0)
 
   if (error instanceof KurioApiError && error.status === 404) {
     return <NotFound message="Este NFT não existe ou foi removido." />
   }
 
   if (isLoading || !nft) {
-    // Mesma estrutura (container > breadcrumb > grid de 2 colunas) do
+    // Mesma estrutura (container > breadcrumb > galeria + detalhes) do
     // conteúdo real logo abaixo — se o esqueleto tivesse uma hierarquia
     // diferente, a troca causaria um layout shift enorme (CLS) quando os
     // dados chegassem, em vez de só substituir os blocos de conteúdo.
     return (
-      <div className="container py-10">
-        <p className="mb-6 text-caption text-text-secondary">
-          <span className="invisible">Início / Carregando…</span>
+      <div className="container py-6">
+        <p className="text-[15px] font-bold leading-4">
+          <span className="invisible">Início / Mercado</span>
         </p>
-        <div className="grid gap-10 md:grid-cols-2">
-          <Skeleton className="aspect-square w-full" />
-          <div className="space-y-4">
+        <div className="mt-3 flex flex-col gap-8 lg:flex-row">
+          <div className="flex gap-4 lg:w-[573px]">
+            <div className="flex shrink-0 gap-4 max-lg:flex-row lg:w-[100px] lg:flex-col">
+              {VIEW_OFFSETS.map((_, i) => (
+                <Skeleton key={i} className="h-[100px] w-[100px] rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="aspect-square flex-1 rounded-md" />
+          </div>
+          <div className="flex-1 space-y-4">
             <Skeleton className="h-8 w-2/3" />
             <Skeleton className="h-6 w-1/3" />
             <Skeleton className="h-24 w-full" />
@@ -59,6 +74,7 @@ export function NftDetailPage() {
   const isFavorite = favorites?.some((f) => f.id === nft.id) ?? false
   const soldOut = nft.editionsAvailable === 0
   const maxQuantity = Math.max(1, Math.min(nft.editionsAvailable, 20))
+  const roundedRating = Math.round(nft.rating)
 
   async function handleAddToCart(goToCheckout: boolean) {
     try {
@@ -71,133 +87,205 @@ export function NftDetailPage() {
   }
 
   return (
-    <div className="container py-10">
-      <p className="mb-6 text-caption text-text-secondary">
-        <Link to="/" className="hover:text-text-primary">
+    <div className="container py-6">
+      <p className="text-[15px] font-bold leading-4 text-foreground">
+        <Link to="/" className="hover:text-text-accent">
           Início
         </Link>{' '}
-        / <span className="text-text-primary">{nft.name}</span>
+        / <span className="text-text-accent">Mercado</span>
       </p>
 
-      <div className="grid gap-10 md:grid-cols-2">
-        <div className="aspect-square overflow-hidden rounded-lg border border-border">
-          <NftArt seed={nft.seed} palette={nft.palette} title={nft.name} />
-        </div>
-
-        <div>
-          <h1 className="text-heading font-bold text-text-primary">{nft.name}</h1>
-          <div className="mt-2 flex items-center gap-3">
-            <span className="text-body-lg font-bold text-primary">{formatEth(nft.priceEth)}</span>
-            <span className="flex items-center gap-1 text-caption text-text-secondary">
-              <Star className="h-3.5 w-3.5 fill-primary text-primary" /> {nft.rating.toFixed(1)} ({nft.reviewsCount} avaliações)
-            </span>
+      <div className="mt-3 flex flex-col gap-8 lg:flex-row">
+        <div className="flex flex-col-reverse gap-4 lg:w-[573px] lg:flex-row lg:gap-7">
+          <div className="flex gap-3 lg:w-[100px] lg:shrink-0 lg:flex-col lg:gap-4">
+            {VIEW_OFFSETS.map((offset, index) => (
+              <button
+                key={offset}
+                type="button"
+                onClick={() => setActiveView(index)}
+                aria-label={`Ver imagem ${index + 1} de ${VIEW_OFFSETS.length}`}
+                aria-pressed={activeView === index}
+                className={cn(
+                  'aspect-square flex-1 overflow-hidden rounded-lg bg-surface-card lg:size-[100px] lg:flex-none',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                  activeView === index ? 'border border-primary' : 'border border-transparent',
+                )}
+              >
+                <NftArt seed={nft.seed + offset} palette={nft.palette} title="" />
+              </button>
+            ))}
           </div>
 
-          <p className="mt-4 text-body text-text-secondary">{nft.description}</p>
+          <div className="relative flex min-w-0 flex-1 items-center justify-center rounded-md bg-surface-card p-4">
+            <div className="aspect-square w-full overflow-hidden rounded-3xl">
+              <NftArt seed={nft.seed + VIEW_OFFSETS[activeView]} palette={nft.palette} title={nft.name} />
+            </div>
+            <span
+              aria-hidden
+              className="absolute right-4 top-4 flex size-[30px] items-center justify-center rounded-full bg-ink/60 text-text-primary"
+            >
+              <ZoomIn className="size-4" />
+            </span>
+          </div>
+        </div>
 
-          <p className="mt-4 text-caption text-text-secondary">
-            Edição: {nft.editionIndex}/{nft.editionSize} ({nft.editionsAvailable} aberta{nft.editionsAvailable === 1 ? '' : 's'})
-          </p>
+        <div className="flex flex-1 flex-col gap-6 lg:justify-between lg:gap-4">
+          <div>
+            <h1 className="text-[28px] font-bold leading-tight text-foreground">{nft.name}</h1>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[22px] font-bold leading-4 text-text-accent">{formatEth(nft.priceEth)}</span>
+              <span className="flex items-center gap-1 text-[15px] text-foreground">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    aria-hidden
+                    className={cn('size-[15px]', i < roundedRating ? 'fill-accent text-accent' : 'fill-secondary/30 text-secondary/30')}
+                  />
+                ))}
+                <span className="ml-1 max-sm:hidden">
+                  {nft.reviewsCount} {nft.reviewsCount === 1 ? 'avaliação' : 'avaliações'} de colecionadores
+                </span>
+                <span className="ml-1 sm:hidden">
+                  {nft.rating.toFixed(1)} ({nft.reviewsCount})
+                </span>
+              </span>
+            </div>
+            <div className="mt-3 border-t border-border" />
+          </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div>
+            <p className="text-[15px] font-bold leading-4 text-foreground">Sobre este NFT:</p>
+            <p className="mt-3 text-body leading-6 text-text-secondary">{nft.description}</p>
+          </div>
+
+          <div>
+            <p className="text-[15px] font-bold leading-4 text-foreground">Edição:</p>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <EditionChip active>
+                {nft.editionIndex}/{nft.editionSize}
+              </EditionChip>
+              <EditionChip>
+                {nft.editionsAvailable} {nft.editionsAvailable === 1 ? 'disponível' : 'disponíveis'}
+              </EditionChip>
+              <EditionChip>{soldOut ? 'ESGOTADA' : 'ABERTA'}</EditionChip>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
             {!soldOut && (
-              <div className="flex items-center rounded-md border border-border-soft">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  className="flex h-11 w-11 items-center justify-center text-text-primary disabled:opacity-40"
+                  className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
                   disabled={quantity <= 1}
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Diminuir quantidade"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="size-4" />
                 </button>
-                <span className="w-10 text-center text-body font-medium text-text-primary" aria-live="polite">
+                <span className="min-w-6 text-center text-[20px] leading-7 text-foreground" aria-live="polite">
                   {quantity}
                 </span>
                 <button
                   type="button"
-                  className="flex h-11 w-11 items-center justify-center text-text-primary disabled:opacity-40"
+                  className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
                   disabled={quantity >= maxQuantity}
                   onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
                   aria-label="Aumentar quantidade"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="size-4" />
                 </button>
               </div>
             )}
 
-            <Button disabled={soldOut || addToCart.isPending} onClick={() => handleAddToCart(true)}>
-              {soldOut ? 'Esgotado' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
-            </Button>
-
-            {session ? (
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
-                variant="outline"
-                onClick={() => toggleFavorite.mutate({ nftId: nft.id, isFavorite })}
-                aria-pressed={isFavorite}
+                className="h-10 flex-1 text-[14px] font-bold sm:w-[130px] sm:flex-none"
+                disabled={soldOut || addToCart.isPending}
+                onClick={() => handleAddToCart(true)}
               >
-                <Heart className={isFavorite ? 'fill-primary text-primary' : ''} /> Favoritar
+                {soldOut ? 'Esgotado' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
               </Button>
-            ) : (
-              <Button variant="outline" asChild>
-                <Link to="/login" search={{ redirect: `/nft/${nft.id}` }}>
-                  <Heart /> Favoritar
-                </Link>
-              </Button>
-            )}
+
+              {session ? (
+                <Button
+                  variant="outline"
+                  className="h-10 flex-1 border-primary text-[14px] font-medium text-text-accent sm:w-[130px] sm:flex-none"
+                  onClick={() => toggleFavorite.mutate({ nftId: nft.id, isFavorite })}
+                  aria-pressed={isFavorite}
+                >
+                  <Heart className={isFavorite ? 'fill-primary text-primary' : ''} /> Favoritar
+                </Button>
+              ) : (
+                <Button variant="outline" className="h-10 flex-1 border-primary text-[14px] font-medium text-text-accent sm:w-[130px] sm:flex-none" asChild>
+                  <Link to="/login" search={{ redirect: `/nft/${nft.id}` }}>
+                    <Heart /> Favoritar
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
 
-          <dl className="mt-6 space-y-1 text-caption text-text-secondary">
-            <div className="flex gap-2">
-              <dt className="font-medium text-text-primary">ID do token:</dt>
-              <dd>#{nft.tokenId}</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="font-medium text-text-primary">Coleção:</dt>
-              <dd>{nft.collection}</dd>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <dt className="font-medium text-text-primary">Atributos:</dt>
-              <dd className="flex flex-wrap gap-1.5">
-                {nft.attributes.map((a) => (
-                  <Badge key={a.trait} variant="outline">
-                    {a.value}
-                  </Badge>
-                ))}
-              </dd>
-            </div>
-          </dl>
+          <div>
+            <dl className="space-y-3 text-[15px] text-secondary">
+              <div className="flex gap-2">
+                <dt>ID do token:</dt>
+                <dd>#{nft.tokenId}</dd>
+              </div>
+              <div className="flex gap-2">
+                <dt>Coleção:</dt>
+                <dd>{nft.collection}</dd>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <dt>Atributos:</dt>
+                <dd>{nft.attributes.map((a) => a.value).join(', ')}</dd>
+              </div>
+            </dl>
 
-          <div className="mt-4 flex items-center gap-2 text-text-secondary">
-            <span className="text-caption">Compartilhar este NFT:</span>
-            <Share2 className="h-4 w-4" aria-hidden />
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[15px] font-bold leading-4 text-foreground">Compartilhar este NFT:</span>
+              <span className="flex items-center gap-2 text-text-secondary" aria-label="Compartilhar (ilustrativo)">
+                <Linkedin aria-hidden className="size-4" />
+                <Mail aria-hidden className="size-[18px]" />
+                <Twitter aria-hidden className="size-4" />
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue="details" className="mt-12">
-        <TabsList>
-          <TabsTrigger value="details">Detalhes do NFT</TabsTrigger>
-          <TabsTrigger value="reviews">Avaliações de colecionadores ({nft.reviewsCount})</TabsTrigger>
+      <Tabs defaultValue="details" className="mt-24 block">
+        <TabsList className="w-full justify-start gap-8">
+          <TabsTrigger value="details" className="text-[17px]">
+            Detalhes do NFT
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="text-[17px]">
+            Avaliações de colecionadores ({nft.reviewsCount})
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="details" className="max-w-3xl space-y-4 text-body text-text-secondary">
+
+        <TabsContent value="details" className="space-y-6 text-body leading-6 text-text-secondary">
           <p>{nft.description}</p>
-          <p>
-            <strong className="text-text-primary">Rede:</strong> Cunhado na {NETWORK_LABELS[nft.network]} com procedência imutável e
-            metadados armazenados no IPFS.
-          </p>
-          <p className="break-all">
-            <strong className="text-text-primary">Contrato:</strong> {nft.contractAddress}
-          </p>
-          <p>
-            <strong className="text-text-primary">Direitos autorais:</strong> {(nft.royaltyBps / 100).toFixed(2)}% nas vendas
-            secundárias, pagos automaticamente pelo mercado.
-          </p>
-          <p>
-            <strong className="text-text-primary">Categoria:</strong> {CATEGORY_LABELS[nft.category]}
-          </p>
+          <div>
+            <p className="font-bold text-foreground">Rede:</p>
+            <p>
+              Cunhado na {NETWORK_LABELS[nft.network]} com procedência imutável e metadados armazenados no IPFS. Categoria:{' '}
+              {CATEGORY_LABELS[nft.category]}.
+            </p>
+          </div>
+          <div>
+            <p className="font-bold text-foreground">Contrato:</p>
+            <p className="break-all">{nft.contractAddress} • Contrato inteligente ERC-721 verificado.</p>
+          </div>
+          <div>
+            <p className="font-bold text-foreground">Direitos autorais:</p>
+            <p>
+              {(nft.royaltyBps / 100).toFixed(2)}% nas vendas secundárias, pagos automaticamente pelos mercados compatíveis.
+            </p>
+          </div>
         </TabsContent>
-        <TabsContent value="reviews" className="text-body text-text-secondary">
+
+        <TabsContent value="reviews" className="text-body leading-6 text-text-secondary">
           <p>
             Média de {nft.rating.toFixed(1)} de 5 em {nft.reviewsCount} avaliações de colecionadores verificados.
           </p>
@@ -205,15 +293,29 @@ export function NftDetailPage() {
       </Tabs>
 
       {related && related.items.length > 0 && (
-        <section className="mt-14">
-          <h2 className="mb-5 text-body-lg font-bold text-text-primary">Mais desta coleção</h2>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {related.items.slice(0, 6).map((item) => (
+        <section className="mt-24">
+          <h2 className="text-[17px] font-bold leading-4 text-text-accent">Mais desta coleção</h2>
+          <div className="mt-3 border-t border-border" />
+          <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+            {related.items.slice(0, 5).map((item) => (
               <ProductCard key={item.id} nft={item} />
             ))}
           </div>
         </section>
       )}
     </div>
+  )
+}
+
+function EditionChip({ children, active = false }: { children: React.ReactNode; active?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'flex h-7 items-center justify-center rounded-full border px-3 text-[14px] leading-4',
+        active ? 'border-primary font-medium text-text-accent' : 'border-border-soft text-text-secondary',
+      )}
+    >
+      {children}
+    </span>
   )
 }
