@@ -1,0 +1,66 @@
+{
+  "environment": {
+    "date": "2026-09-10T15:55:22.440Z",
+    "nodeVersion": "v22.22.2",
+    "lighthouseVersion": "13.4.1",
+    "chromeVersion": "Chromium 141.0.7390.37",
+    "os": "linux x64",
+    "baseUrl": "http://localhost:4173",
+    "runsPerCombo": 3,
+    "mockScenario": "default"
+  },
+  "summary": [
+    {
+      "page": "inicio",
+      "pageLabel": "Início",
+      "profile": "mobile",
+      "profileLabel": "Mobile",
+      "performance": 85,
+      "accessibility": 95,
+      "bestPractices": 100,
+      "seo": 91,
+      "lcpMs": 3415,
+      "clsScore": 0.001,
+      "tbtMs": 169
+    },
+    {
+      "page": "inicio",
+      "pageLabel": "Início",
+      "profile": "desktop",
+      "profileLabel": "Desktop",
+      "performance": 98,
+      "accessibility": 95,
+      "bestPractices": 100,
+      "seo": 91,
+      "lcpMs": 1009,
+      "clsScore": 0,
+      "tbtMs": 3
+    },
+    {
+      "page": "detalhe",
+      "pageLabel": "Detalhe do NFT",
+      "profile": "mobile",
+      "profileLabel": "Mobile",
+      "performance": 81,
+      "accessibility": 97,
+      "bestPractices": 100,
+      "seo": 91,
+      "lcpMs": 3684,
+      "clsScore": 0,
+      "tbtMs": 254
+    },
+    {
+      "page": "detalhe",
+      "pageLabel": "Detalhe do NFT",
+      "profile": "desktop",
+      "profileLabel": "Desktop",
+      "performance": 94,
+      "accessibility": 97,
+      "bestPractices": 100,
+      "seo": 91,
+      "lcpMs": 1067,
+      "clsScore": 0.117,
+      "tbtMs": 0
+    }
+  ]
+}

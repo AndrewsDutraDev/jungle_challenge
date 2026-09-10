@@ -1,0 +1,75 @@
+@import '@fontsource/roboto-mono/400.css';
+@import '@fontsource/roboto-mono/500.css';
+@import '@fontsource/roboto-mono/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-ink text-text-primary font-mono antialiased;
+    font-feature-settings: 'liga' 1;
+  }
+
+  ::selection {
+    @apply bg-primary/30 text-text-primary;
+  }
+
+  /* Foco visível consistente em toda a aplicação (WCAG 2.4.7) */
+  :focus-visible {
+    outline: 2px solid theme('colors.primary.DEFAULT');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Skeleton com shimmer — usado em catálogo, detalhe e resumo do carrinho */
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-card;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.surface-card') 0px,
+      theme('colors.surface-dark') 40px,
+      theme('colors.surface-card') 80px
+    );
+    background-size: 936px 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton {
+      animation: none;
+      background-image: none;
+      @apply bg-surface-card;
+    }
+  }
+
+  .sr-only-focusable {
+    @apply sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground;
+  }
+}

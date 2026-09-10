@@ -1,0 +1,194 @@
+[
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "mobile",
+    "run": 1,
+    "categories": {
+      "performance": 85,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3374.8073499999996,
+    "cls": 0.0006863051322651752,
+    "tbt": 169
+  },
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "mobile",
+    "run": 2,
+    "categories": {
+      "performance": 85,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3414.69215,
+    "cls": 0.0006863051322651752,
+    "tbt": 150.5
+  },
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "mobile",
+    "run": 3,
+    "categories": {
+      "performance": 84,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3438.09935,
+    "cls": 0.0006863051322651752,
+    "tbt": 204.5
+  },
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "desktop",
+    "run": 1,
+    "categories": {
+      "performance": 98,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 1008.6894499999999,
+    "cls": 0.00012414507027803427,
+    "tbt": 5.5
+  },
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "desktop",
+    "run": 2,
+    "categories": {
+      "performance": 98,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 1013.4209500000001,
+    "cls": 0.00012414507027803427,
+    "tbt": 3
+  },
+  {
+    "page": "inicio",
+    "pageLabel": "Início",
+    "profile": "desktop",
+    "run": 3,
+    "categories": {
+      "performance": 98,
+      "accessibility": 95,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 992.8081,
+    "cls": 0.00012414507027803427,
+    "tbt": 0
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "mobile",
+    "run": 1,
+    "categories": {
+      "performance": 82,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3683.70485,
+    "cls": 0,
+    "tbt": 195.5
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "mobile",
+    "run": 2,
+    "categories": {
+      "performance": 81,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3624.794,
+    "cls": 0,
+    "tbt": 253.5
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "mobile",
+    "run": 3,
+    "categories": {
+      "performance": 78,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 3744.68115,
+    "cls": 0,
+    "tbt": 308
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "desktop",
+    "run": 1,
+    "categories": {
+      "performance": 94,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 62
+    },
+    "lcp": 1101.6934999999999,
+    "cls": 0.11666666666666667,
+    "tbt": 16.5
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "desktop",
+    "run": 2,
+    "categories": {
+      "performance": 94,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 62
+    },
+    "lcp": 1066.7127,
+    "cls": 0.11666666666666667,
+    "tbt": 0
+  },
+  {
+    "page": "detalhe",
+    "pageLabel": "Detalhe do NFT",
+    "profile": "desktop",
+    "run": 3,
+    "categories": {
+      "performance": 98,
+      "accessibility": 97,
+      "best-practices": 100,
+      "seo": 91,
+      "agentic-browsing": 67
+    },
+    "lcp": 1009.97435,
+    "cls": 0.031029239766081868,
+    "tbt": 0
+  }
+]
