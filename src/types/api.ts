@@ -110,6 +110,12 @@ export interface Nft {
   version: number
 }
 
+export interface NftFacets {
+  categories: Record<NftCategory, number>
+  networks: Record<Network, number>
+  priceRange: { min: number; max: number }
+}
+
 export interface NftListParams {
   q?: string
   category?: NftCategory[]

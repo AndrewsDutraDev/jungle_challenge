@@ -35,7 +35,7 @@ export function BlogSection() {
   return (
     <section aria-labelledby="blog-heading">
       <div className="text-center">
-        <h2 id="blog-heading" className="text-heading font-bold text-text-primary">
+        <h2 id="blog-heading" className="text-[28px] font-bold text-text-primary">
           Diário da Cunhagem
         </h2>
         <p className="mt-2 text-body text-text-secondary">
@@ -49,11 +49,11 @@ export function BlogSection() {
               <NftArt seed={post.seed} palette={post.palette} title="" />
             </div>
             <div className="flex flex-1 flex-col gap-2 p-4">
-              <p className="text-tiny font-medium text-text-secondary">{post.meta}</p>
-              <p className="text-body font-bold text-text-primary">{post.title}</p>
-              <p className="text-tiny text-text-secondary">{post.excerpt}</p>
+              <p className="text-[12px] font-medium text-text-secondary">{post.meta}</p>
+              <p className="text-[16px] font-bold text-text-primary">{post.title}</p>
+              <p className="text-[12px] font-medium text-text-secondary">{post.excerpt}</p>
               <span
-                className="mt-auto cursor-not-allowed pt-2 text-tiny font-bold text-text-accent"
+                className="mt-auto cursor-not-allowed pt-2 text-[12px] font-bold text-text-accent"
                 title="Fora do escopo desta entrega"
               >
                 Ler mais →

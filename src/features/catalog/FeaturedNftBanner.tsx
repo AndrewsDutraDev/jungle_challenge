@@ -16,7 +16,7 @@ export function FeaturedNftBanner({ nft }: { nft: Nft | undefined }) {
     >
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-heading font-bold text-text-accent">NFT EM DESTAQUE</p>
-        <p className="text-body-lg font-bold text-text-primary">OFERTA LIMITADA</p>
+        <p className="text-[22px] font-bold text-foreground">OFERTA LIMITADA</p>
       </div>
       <div className="aspect-[310/368] overflow-hidden rounded-[22px]">
         <NftArt seed={nft.seed} palette={nft.palette} title={nft.name} />

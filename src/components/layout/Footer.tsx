@@ -28,13 +28,13 @@ export function Footer() {
               {step.letter}
             </span>
             <div>
-              <h3 className="text-body font-bold text-text-primary">{step.title}</h3>
-              <p className="mt-1 text-caption text-text-secondary">{step.copy}</p>
+              <h3 className="text-[17px] font-bold text-text-primary">{step.title}</h3>
+              <p className="mt-1 text-body text-text-secondary">{step.copy}</p>
             </div>
           </div>
         ))}
         <div>
-          <h3 className="text-body font-bold text-text-primary">Antecipe-se ao próximo lançamento</h3>
+          <h3 className="text-body-lg font-bold text-text-primary">Antecipe-se ao próximo lançamento</h3>
           <form
             className="mt-3 flex gap-2"
             onSubmit={(e) => {
@@ -54,7 +54,7 @@ export function Footer() {
               onChange={(e) => setEmail(e.target.value)}
               className="h-10"
             />
-            <Button type="submit" size="sm" className="shrink-0">
+            <Button type="submit" size="sm" className="shrink-0 text-[18px] font-bold">
               Enviar
             </Button>
           </form>
@@ -78,7 +78,7 @@ export function Footer() {
       <div className="container grid gap-8 py-10 sm:grid-cols-2 md:grid-cols-4">
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.title}>
-            <h4 className="mb-3 text-body font-bold text-text-primary">{col.title}</h4>
+            <h4 className="mb-3 text-body-lg font-bold text-text-primary">{col.title}</h4>
             <ul className="space-y-2">
               {col.links.map((link) => (
                 <li key={link}>
@@ -91,7 +91,7 @@ export function Footer() {
           </div>
         ))}
         <div>
-          <h4 className="mb-3 text-body font-bold text-text-primary">Redes sociais</h4>
+          <h4 className="mb-3 text-body-lg font-bold text-text-primary">Redes sociais</h4>
           <div className="flex gap-2" aria-label="Redes sociais (ilustrativas)">
             {[Facebook, Instagram, Twitter, Linkedin, Youtube].map((Icon, i) => (
               <span

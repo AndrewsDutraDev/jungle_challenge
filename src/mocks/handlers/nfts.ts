@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
-import type { Nft, NftCategory, Network, Paginated, SortOption } from '@/types/api'
+import type { Nft, NftCategory, NftFacets, Network, Paginated, SortOption } from '@/types/api'
+import { CATEGORY_OPTIONS, NETWORK_OPTIONS } from '../fixtures'
 import { getDb } from '../db'
 import { applyNetworkDelay, isScenario, maybeFailConnection, maybeServerError } from '../scenarios'
 import { errors } from '../respond'
@@ -79,6 +80,62 @@ export const nftHandlers = [
     const items = sorted.slice(start, start + pageSize)
 
     const body: Paginated<Nft> = { items, page, pageSize, total, totalPages }
+    return HttpResponse.json(body)
+  }),
+
+  /*
+    Contagens por faceta seguem a convenção de marketplace: cada eixo é contado
+    ignorando o próprio filtro (marcar "Arte digital" não zera as outras
+    coleções), mas respeitando os demais. A faixa de preço é do catálogo
+    inteiro, para os limites do slider não pularem a cada filtro.
+  */
+  http.get('/api/nfts/facets', async ({ request }) => {
+    await applyNetworkDelay()
+    try {
+      maybeFailConnection()
+    } catch {
+      return HttpResponse.error()
+    }
+
+    const url = new URL(request.url)
+    const q = url.searchParams.get('q')
+    const categories = url.searchParams.getAll('category') as NftCategory[]
+    const network = url.searchParams.getAll('network') as Network[]
+    const minPriceParam = url.searchParams.get('minPrice')
+    const maxPriceParam = url.searchParams.get('maxPrice')
+    const minPrice = minPriceParam ? Number(minPriceParam) : null
+    const maxPrice = maxPriceParam ? Number(maxPriceParam) : null
+
+    const db = await getDb()
+    const empty = isScenario('empty-catalog')
+
+    const countBy = <T extends string>(options: readonly T[], pick: (nft: Nft) => T, ignoreOwnAxis: 'category' | 'network') =>
+      options.reduce(
+        (acc, option) => {
+          acc[option] = empty
+            ? 0
+            : db.nfts.filter(
+                (nft) =>
+                  pick(nft) === option &&
+                  matchesFilters(nft, {
+                    q,
+                    categories: ignoreOwnAxis === 'category' ? [] : categories,
+                    network: ignoreOwnAxis === 'network' ? [] : network,
+                    minPrice,
+                    maxPrice,
+                  }),
+              ).length
+          return acc
+        },
+        {} as Record<T, number>,
+      )
+
+    const prices = db.nfts.map((nft) => Number(nft.priceEth))
+    const body: NftFacets = {
+      categories: countBy(CATEGORY_OPTIONS, (nft) => nft.category, 'category'),
+      networks: countBy(NETWORK_OPTIONS, (nft) => nft.network, 'network'),
+      priceRange: { min: Math.min(...prices), max: Math.max(...prices) },
+    }
     return HttpResponse.json(body)
   }),
 

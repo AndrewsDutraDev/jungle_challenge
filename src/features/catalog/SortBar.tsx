@@ -28,19 +28,28 @@ export function SortBar({ total, sort, rawSort, hasCategoryFilter, onSortChange,
     <div className="mb-5 flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabValue)}>
-          <TabsList className="border-b-0">
-            <TabsTrigger value="all">Todos os NFTs</TabsTrigger>
-            <TabsTrigger value="recent">Novos lançamentos</TabsTrigger>
-            <TabsTrigger value="trending">Em alta</TabsTrigger>
+          <TabsList className="gap-5 border-b-0">
+            <TabsTrigger value="all" className="text-[15px]">
+              Todos os NFTs
+            </TabsTrigger>
+            <TabsTrigger value="recent" className="text-[15px]">
+              Novos lançamentos
+            </TabsTrigger>
+            <TabsTrigger value="trending" className="text-[15px]">
+              Em alta
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <div className="flex items-center gap-2">
-          <label htmlFor="sort-select" className="text-caption text-text-secondary">
+          <label htmlFor="sort-select" className="text-[15px] text-foreground">
             Ordenar por:
           </label>
           <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-            <SelectTrigger id="sort-select" className="w-52">
+            <SelectTrigger
+              id="sort-select"
+              className="h-auto w-auto gap-2 border-0 bg-transparent p-0 text-[15px] text-foreground hover:text-text-accent focus:ring-0"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

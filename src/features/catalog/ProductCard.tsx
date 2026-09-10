@@ -17,9 +17,13 @@ export function ProductCard({ nft }: { nft: Nft }) {
   const soldOut = nft.editionsAvailable === 0
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface-card transition-colors hover:border-border-soft">
-      <div className="relative aspect-square overflow-hidden">
-        <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="block h-full w-full">
+    <div className="group relative flex flex-col gap-3">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-surface-card p-2">
+        <Link
+          to="/nft/$nftId"
+          params={{ nftId: nft.id }}
+          className="block h-full w-full overflow-hidden rounded-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
           <NftArt seed={nft.seed} palette={nft.palette} title={nft.name} className="transition-transform duration-300 group-hover:scale-105" />
         </Link>
         {soldOut && (
@@ -54,11 +58,11 @@ export function ProductCard({ nft }: { nft: Nft }) {
           </Link>
         </div>
       </div>
-      <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="flex flex-1 flex-col gap-1 p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="truncate text-body font-medium text-text-primary">{nft.name}</span>
-        <span className="flex items-center gap-2 text-body font-bold text-primary">
-          {formatEth(nft.priceEth)}
-          {priceDropped && <span className="text-caption font-normal text-text-secondary line-through">{formatEth(nft.previousPriceEth!)}</span>}
+      <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="flex flex-1 flex-col gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span className="truncate text-[16px] font-normal text-text-primary">{nft.name}</span>
+        <span className="flex items-center gap-3 text-[18px]">
+          <span className="font-bold text-text-accent">{formatEth(nft.priceEth)}</span>
+          {priceDropped && <span className="font-normal text-secondary line-through">{formatEth(nft.previousPriceEth!)}</span>}
         </span>
       </Link>
     </div>

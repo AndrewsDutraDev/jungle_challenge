@@ -5,6 +5,7 @@ export const queryKeys = {
   session: () => ['session'] as const,
   nfts: {
     list: (params: NftListParams) => ['nfts', 'list', params] as const,
+    facets: (params: Omit<NftListParams, 'page' | 'pageSize' | 'sort'>) => ['nfts', 'facets', params] as const,
     detail: (id: string) => ['nfts', 'detail', id] as const,
     related: (id: string) => ['nfts', 'related', id] as const,
   },

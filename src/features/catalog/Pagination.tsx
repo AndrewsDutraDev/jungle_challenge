@@ -23,7 +23,7 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
           variant={p === page ? 'default' : 'outline'}
           aria-current={p === page ? 'page' : undefined}
           onClick={() => onPageChange(p)}
-          className={cn('min-w-9')}
+          className={cn('min-w-9 text-[18px]', p === page ? 'font-bold' : 'font-normal')}
         >
           {p}
         </Button>

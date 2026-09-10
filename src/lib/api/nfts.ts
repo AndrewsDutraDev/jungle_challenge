@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from './client'
 import { queryKeys } from '@/lib/query/keys'
-import type { Nft, NftListParams, Paginated } from '@/types/api'
+import type { Nft, NftFacets, NftListParams, Paginated } from '@/types/api'
+
+type FacetParams = Omit<NftListParams, 'page' | 'pageSize' | 'sort'>
 
 export async function fetchNftList(params: NftListParams, signal?: AbortSignal): Promise<Paginated<Nft>> {
   const search = new URLSearchParams()
@@ -15,6 +17,18 @@ export async function fetchNftList(params: NftListParams, signal?: AbortSignal):
   search.set('pageSize', String(params.pageSize ?? 9))
 
   const { data } = await apiClient.get<Paginated<Nft>>(`/nfts?${search.toString()}`, { signal })
+  return data
+}
+
+export async function fetchNftFacets(params: FacetParams, signal?: AbortSignal): Promise<NftFacets> {
+  const search = new URLSearchParams()
+  if (params.q) search.set('q', params.q)
+  for (const c of params.category ?? []) search.append('category', c)
+  for (const n of params.network ?? []) search.append('network', n)
+  if (params.minPrice != null) search.set('minPrice', String(params.minPrice))
+  if (params.maxPrice != null) search.set('maxPrice', String(params.maxPrice))
+
+  const { data } = await apiClient.get<NftFacets>(`/nfts/facets?${search.toString()}`, { signal })
   return data
 }
 
@@ -32,6 +46,15 @@ export function useNftListQuery(params: NftListParams) {
   return useQuery({
     queryKey: queryKeys.nfts.list(params),
     queryFn: ({ signal }) => fetchNftList(params, signal),
+    placeholderData: (previous) => previous,
+    staleTime: 15_000,
+  })
+}
+
+export function useNftFacetsQuery(params: FacetParams) {
+  return useQuery({
+    queryKey: queryKeys.nfts.facets(params),
+    queryFn: ({ signal }) => fetchNftFacets(params, signal),
     placeholderData: (previous) => previous,
     staleTime: 15_000,
   })

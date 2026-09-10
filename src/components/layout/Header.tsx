@@ -52,7 +52,7 @@ export function Header() {
           Pular para o conteúdo
         </a>
         <div className="container flex h-[68px] items-center justify-between gap-4">
-          <Link to="/" className="text-body-lg font-bold tracking-[0.2em] text-text-primary">
+          <Link to="/" className="text-[14px] font-bold tracking-[1.4px] text-text-primary">
             KURIO
           </Link>
 
@@ -61,7 +61,7 @@ export function Header() {
               <Link
                 key={link.label}
                 to={link.to}
-                className="text-body font-medium text-text-secondary transition-colors hover:text-text-primary [&.active]:text-primary"
+                className="text-[16px] font-normal text-foreground transition-colors hover:text-text-accent [&.active]:font-bold [&.active]:text-text-accent"
                 activeOptions={{ exact: true }}
               >
                 {link.label}
@@ -72,7 +72,7 @@ export function Header() {
                 key={label}
                 aria-disabled="true"
                 title="Fora do escopo desta entrega"
-                className="cursor-not-allowed text-body font-medium text-text-secondary/40"
+                className="cursor-not-allowed text-[16px] font-normal text-foreground/40"
               >
                 {label}
               </span>
@@ -87,7 +87,7 @@ export function Header() {
               <Link to="/cart">
                 <ShoppingCart />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-tiny font-bold text-primary-foreground">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
                     {cartCount}
                   </span>
                 )}
@@ -118,7 +118,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild size="sm" className="hidden sm:inline-flex">
+              <Button asChild size="sm" className="hidden text-[16px] font-medium sm:inline-flex">
                 <Link to="/login">
                   <UserIcon className="h-4 w-4" /> Entrar
                 </Link>
