@@ -24,7 +24,7 @@ export function CatalogFilters({ search, onChange }: CatalogFiltersProps) {
   }
 
   return (
-    <aside className="w-full shrink-0 md:w-[280px]" aria-label="Filtros do catálogo">
+    <div className="w-full rounded-lg bg-surface-card p-5" aria-label="Filtros do catálogo" role="group">
       <fieldset className="mb-8">
         <legend className="mb-3 text-body font-bold text-text-primary">Coleções</legend>
         <div className="space-y-2.5">
@@ -95,6 +95,6 @@ export function CatalogFilters({ search, onChange }: CatalogFiltersProps) {
           })}
         </div>
       </fieldset>
-    </aside>
+    </div>
   )
 }
