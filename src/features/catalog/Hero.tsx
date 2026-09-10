@@ -57,7 +57,7 @@ export function Hero() {
           <Button asChild size="lg" className="mt-6 text-[16px] font-bold">
             <Link to="/">EXPLORAR</Link>
           </Button>
-          <div className="mt-8 flex gap-1.5" aria-hidden="true">
+          <div className="mt-11 flex justify-end gap-1.5" aria-hidden="true">
             <span className="h-1.5 w-4 rounded-full bg-primary" />
             <span className="h-1.5 w-1.5 rounded-full bg-border-soft" />
             <span className="h-1.5 w-1.5 rounded-full bg-border-soft" />

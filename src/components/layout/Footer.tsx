@@ -90,18 +90,26 @@ export function Footer() {
             </ul>
           </div>
         ))}
-        <div>
-          <h4 className="mb-3 text-body-lg font-bold text-text-primary">Redes sociais</h4>
-          <div className="flex gap-2" aria-label="Redes sociais (ilustrativas)">
-            {[Facebook, Instagram, Twitter, Linkedin, Youtube].map((Icon, i) => (
-              <span
-                key={i}
-                className="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-full border border-border-soft text-text-secondary/70"
-                title="Fora do escopo desta entrega"
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-            ))}
+        <div className="space-y-8">
+          <div>
+            <h4 className="mb-5 text-body-lg font-bold text-text-primary">Redes sociais</h4>
+            <div className="flex gap-2.5" aria-label="Redes sociais (ilustrativas)">
+              {[Facebook, Instagram, Twitter, Linkedin, Youtube].map((Icon, i) => (
+                <span
+                  key={i}
+                  className="flex h-[30px] w-[30px] cursor-not-allowed items-center justify-center rounded-md bg-primary text-primary-foreground"
+                  title="Fora do escopo desta entrega"
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h4 className="mb-3 text-body-lg font-bold text-text-primary">Carteiras compatíveis</h4>
+            <p className="flex h-[26px] items-center justify-center rounded-md border border-border-soft bg-surface-dark px-2 text-[9px] font-bold tracking-[0.1px] text-text-accent">
+              METAMASK&nbsp;&nbsp;•&nbsp;&nbsp;WALLETCONNECT&nbsp;&nbsp;•&nbsp;&nbsp;COINBASE
+            </p>
           </div>
         </div>
       </div>

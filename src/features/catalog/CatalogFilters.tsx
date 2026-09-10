@@ -35,9 +35,15 @@ function FilterRow({
   return (
     <label
       htmlFor={id}
-      className="flex cursor-pointer items-center justify-between gap-3 py-2.5 leading-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+      className="relative flex cursor-pointer items-center justify-between gap-3 py-2.5 leading-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
     >
-      <input id={id} type="checkbox" checked={checked} onChange={onToggle} className="sr-only" />
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+      />
       <span className={cn('text-[15px] transition-colors', checked ? 'font-bold text-text-accent' : 'text-text-secondary')}>{label}</span>
       <span className={cn('text-[15px] font-bold tabular-nums', checked ? 'text-text-accent' : 'text-text-secondary')}>
         {count == null ? '' : `(${count})`}
