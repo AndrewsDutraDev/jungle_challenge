@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { SEED_USERS, loginAs, logout } from './support/auth'
 import { connectWallet } from './support/wallet'
+import { nftIdFromUrl } from './support/api'
 
 /**
  * Se a cotação vista no checkout ficou para trás da do servidor (por exemplo,
@@ -69,5 +70,49 @@ test.describe('Checkout — compra completa', () => {
     await page.goto(receiptUrl)
     await expect(page.getByRole('alert')).toContainText('Este pedido pertence a outra conta')
     await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toHaveCount(0)
+  })
+
+  test('a confirmação desconta do carrinho só a quantidade comprada', async ({ page }) => {
+    test.setTimeout(60_000)
+    // Relógio controlado: o pagamento é decidido 3s após a criação do pedido.
+    await page.clock.install()
+    await loginAs(page, SEED_USERS.ana)
+
+    await page.goto('/')
+    await page.waitForSelector('a[href^="/nft/"]')
+    await page.locator('a[href^="/nft/"]').first().click()
+    await expect(page).toHaveURL(/\/nft\//)
+    const nftId = nftIdFromUrl(page.url())
+    await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
+    await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
+    await expect(page).toHaveURL(/\/checkout/)
+    await connectWallet(page)
+    await confirmPurchase(page)
+
+    // Com o pedido ainda pendente, mais uma edição do mesmo NFT entra no carrinho.
+    const added = await page.evaluate(async (id) => {
+      const token = window.localStorage.getItem('kurio:token')
+      const res = await fetch('/api/cart/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nftId: id, quantity: 1 }),
+      })
+      return res.status
+    }, nftId)
+    expect(added).toBe(201)
+
+    await page.clock.fastForward(4000)
+    await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toBeVisible({ timeout: 10_000 })
+
+    // Saiu só a unidade comprada; a adicionada depois continua no carrinho.
+    const cart = await page.evaluate(async () => {
+      const token = window.localStorage.getItem('kurio:token')
+      const res = await fetch('/api/cart', { headers: { Authorization: `Bearer ${token}` } })
+      return (await res.json()) as { items: Array<{ nftId: string; quantity: number }> }
+    })
+    expect(cart.items).toEqual([expect.objectContaining({ nftId, quantity: 1 })])
+
+    await page.goto('/cart')
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1)
   })
 })

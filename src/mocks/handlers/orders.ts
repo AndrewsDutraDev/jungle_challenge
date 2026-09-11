@@ -76,11 +76,16 @@ async function resolveOrderIfDue(order: DbOrder): Promise<DbOrder> {
   })
 
   if (!declined) {
-    const cartKey = ownerKeyForUser(order.userId)
-    const cart = db.carts.find((c) => c.ownerKey === cartKey)
+    // Desconta só as quantidades compradas: edições do mesmo NFT que entraram
+    // no carrinho enquanto o pedido estava pendente continuam lá. Roda uma
+    // única vez por pedido (na passagem de pendente para confirmado), então
+    // reconsultas e reconexões não descontam em dobro.
+    const cart = db.carts.find((c) => c.ownerKey === ownerKeyForUser(order.userId))
     if (cart) {
-      const purchasedIds = new Set(order.items.map((i) => i.nftId))
-      cart.items = cart.items.filter((i) => !purchasedIds.has(i.nftId))
+      const purchased = new Map(order.items.map((i) => [i.nftId, i.quantity]))
+      cart.items = cart.items
+        .map((item) => ({ ...item, quantity: item.quantity - (purchased.get(item.nftId) ?? 0) }))
+        .filter((item) => item.quantity > 0)
       cart.couponCode = null
       cart.updatedAt = new Date().toISOString()
       saveDb()

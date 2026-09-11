@@ -313,8 +313,11 @@ versão do recurso depois da mudança.
   Quantidade acima da disponibilidade bloqueia até ser ajustada no carrinho.
   Na criação do pedido o servidor ainda revalida versões, total e
   disponibilidade.
-- Após a confirmação, o servidor remove do carrinho os itens comprados; se
-  o pagamento é recusado, o carrinho fica intacto.
+- Após a confirmação, o servidor desconta do carrinho só as quantidades
+  compradas — edições do mesmo NFT adicionadas enquanto o pedido estava
+  pendente continuam lá. O desconto acontece uma única vez, na passagem de
+  pendente para confirmado. Se o pagamento é recusado, o carrinho fica
+  intacto.
 
 ## Cache, retry e sincronização
 
