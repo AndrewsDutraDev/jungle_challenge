@@ -27,8 +27,10 @@ export function Footer() {
   */
   return (
     <footer className="container pb-10 pt-16">
-      {/* Medalhão acima do título e divisórias laranja entre as colunas. */}
-      <div className="grid gap-8 border-t border-primary bg-surface-card p-8 md:grid-cols-[repeat(3,1fr)_357px] md:divide-x md:divide-primary">
+      {/* Medalhão acima do título e divisórias laranja entre as colunas. As
+          quatro colunas do Figma só cabem a partir de 1024px; no tablet ficam
+          em duas, sem divisórias, para não estourar a largura. */}
+      <div className="grid gap-8 border-t border-primary bg-surface-card p-8 md:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_357px] lg:divide-x lg:divide-primary">
         {STEPS.map((step) => (
           <div key={step.letter} className="flex flex-col gap-3 px-4">
             <span className="flex size-[74px] items-center justify-center rounded-full bg-primary text-heading font-bold text-primary-foreground">
@@ -88,7 +90,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="grid gap-8 bg-surface-card p-8 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-8 bg-surface-card p-8 sm:grid-cols-2 lg:grid-cols-4">
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.title}>
             <h4 className="mb-3 text-body-lg font-bold text-text-primary">{col.title}</h4>
@@ -120,8 +122,12 @@ export function Footer() {
           </div>
           <div>
             <h4 className="mb-3 text-body-lg font-bold text-text-primary">Carteiras compatíveis</h4>
-            <p className="flex h-[26px] items-center justify-center rounded-md border border-border-soft bg-surface-dark px-2 text-[9px] font-bold tracking-[0.1px] text-text-accent">
-              METAMASK&nbsp;&nbsp;•&nbsp;&nbsp;WALLETCONNECT&nbsp;&nbsp;•&nbsp;&nbsp;COINBASE
+            <p className="flex min-h-[26px] flex-wrap items-center justify-center gap-x-2 rounded-md border border-border-soft bg-surface-dark px-2 py-1 text-center text-[9px] font-bold tracking-[0.1px] text-text-accent">
+              <span>METAMASK</span>
+              <span aria-hidden>•</span>
+              <span>WALLETCONNECT</span>
+              <span aria-hidden>•</span>
+              <span>COINBASE</span>
             </p>
           </div>
         </div>

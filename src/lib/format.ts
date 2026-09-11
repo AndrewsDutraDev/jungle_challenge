@@ -1,8 +1,16 @@
-export function formatEth(value: string | number): string {
-  const num = typeof value === 'string' ? Number(value) : value
-  if (!Number.isFinite(num)) return '0 ETH'
-  const formatted = num % 1 === 0 ? num.toFixed(0) : num.toFixed(num < 1 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '')
-  return `${formatted} ETH`
+import { toWei, fromWei } from '@/lib/eth'
+
+const ONE_ETH = toWei('1')
+
+/** Até 1 ETH mostra 4 casas, acima 2 — arredondando a partir da string, nunca via `number`. */
+export function formatEth(value: string): string {
+  let wei: bigint
+  try {
+    wei = toWei(value)
+  } catch {
+    return '0 ETH'
+  }
+  return `${fromWei(wei, wei < ONE_ETH ? 4 : 2)} ETH`
 }
 
 export function formatDate(iso: string): string {

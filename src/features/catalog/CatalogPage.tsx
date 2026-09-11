@@ -1,5 +1,7 @@
+import { Loader2 } from 'lucide-react'
 import { Route } from '@/routes/index'
 import { useNftListQuery } from '@/lib/api/nfts'
+import { cn } from '@/lib/utils'
 import { Hero } from './Hero'
 import { CatalogFilters } from './CatalogFilters'
 import { MobileSearchAndFilters } from './MobileSearchAndFilters'
@@ -31,7 +33,10 @@ export function CatalogPage() {
     pageSize: 9,
   }
 
-  const { data, isLoading, isError, error, isFetching, refetch } = useNftListQuery(params)
+  const { data, isLoading, isError, error, isFetching, isPlaceholderData, refetch } = useNftListQuery(params)
+  // Nova busca ou revalidação com resultados já na tela: eles continuam
+  // visíveis e a atualização é sinalizada por cima, sem deslocar o layout.
+  const updating = isFetching && !isLoading && !isError
 
   function updateSearch(patch: Partial<CatalogSearch>) {
     navigate({ search: (prev) => ({ ...prev, ...patch }) })
@@ -113,15 +118,25 @@ export function CatalogPage() {
 
           {!isError && !isLoading && data && data.items.length > 0 && (
             <>
-              <div
-                data-testid="catalog-grid"
-                className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3"
-                aria-busy={isFetching}
-                aria-live="polite"
-              >
-                {data.items.map((nft) => (
-                  <ProductCard key={nft.id} nft={nft} />
-                ))}
+              <div className="relative">
+                <div role="status" className="pointer-events-none absolute inset-x-0 top-2 z-10 flex justify-center">
+                  {updating && (
+                    <span className="flex items-center gap-2 rounded-full border border-border-soft bg-surface-raised px-3 py-1.5 text-caption text-foreground shadow-card">
+                      <Loader2 aria-hidden className="size-4 animate-spin motion-reduce:animate-none" />
+                      Atualizando resultados…
+                    </span>
+                  )}
+                </div>
+                <div
+                  data-testid="catalog-grid"
+                  className={cn('grid grid-cols-2 gap-4 transition-opacity sm:gap-5 lg:grid-cols-3', isPlaceholderData && 'opacity-60')}
+                  aria-busy={isFetching}
+                  aria-live="polite"
+                >
+                  {data.items.map((nft) => (
+                    <ProductCard key={nft.id} nft={nft} />
+                  ))}
+                </div>
               </div>
               <Pagination page={data.page} totalPages={data.totalPages} onPageChange={(page) => updateSearch({ page })} />
             </>

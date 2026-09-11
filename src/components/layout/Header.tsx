@@ -112,6 +112,9 @@ export function Header() {
                     <Link to="/profile">Meu perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/favorites">Favoritos</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/wallets">Carteiras</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

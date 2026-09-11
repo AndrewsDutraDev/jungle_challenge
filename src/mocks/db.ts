@@ -1,4 +1,4 @@
-import type { Nft, Network, OrderStatus, WalletProvider, WalletRole } from '@/types/api'
+import type { CollectorDetails, Nft, Network, OrderStatus, WalletProvider, WalletRole } from '@/types/api'
 import { generateNftFixtures, SEED_COUPONS, SEED_USERS } from './fixtures'
 import { hashPassword } from './hash'
 
@@ -72,6 +72,9 @@ export interface DbOrder {
   version: number
   idempotencyKey: string
   outcomeAt: number // timestamp (ms) em que o pedido deve resolver (confirmado/recusado)
+  // Opcionais: pedidos gravados antes destes campos existirem continuam válidos.
+  collector?: CollectorDetails | null
+  recipientAddress?: string | null
 }
 
 export interface DbWallet {

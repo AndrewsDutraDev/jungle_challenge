@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 
 const LINKS = [
   { to: '/profile' as const, label: 'Dados do perfil', icon: User },
+  { to: '/favorites' as const, label: 'Favoritos', icon: Heart },
   { to: '/wallets' as const, label: 'Carteiras', icon: Wallet },
 ]
 

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OrderTotals } from './OrderTotals'
 import { formatEth } from '@/lib/format'
+import { fromWei, toWei } from '@/lib/eth'
 import { KurioApiError } from '@/lib/api/client'
 import { useIsMobile } from '@/lib/use-media-query'
 
@@ -97,7 +98,7 @@ export function CartPage() {
                       Edição: {item.nft.editionIndex}/{item.nft.editionSize}
                     </p>
                     <p className="text-[18px] font-bold leading-4 text-text-accent">
-                      {formatEth(line?.subtotalEth ?? Number(item.nft.priceEth) * item.quantity)}
+                      {formatEth(line?.subtotalEth ?? fromWei(toWei(item.nft.priceEth) * BigInt(item.quantity)))}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1 pr-2">
@@ -294,7 +295,7 @@ export function CartPage() {
                         </div>
                       </td>
                       <td className="py-0 text-right text-[16px] font-bold text-text-accent">
-                        {formatEth(line?.subtotalEth ?? Number(item.nft.priceEth) * item.quantity)}
+                        {formatEth(line?.subtotalEth ?? fromWei(toWei(item.nft.priceEth) * BigInt(item.quantity)))}
                       </td>
                       <td className="py-0 pr-6 text-right">
                         <button

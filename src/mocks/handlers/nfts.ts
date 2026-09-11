@@ -1,13 +1,14 @@
 import { http, HttpResponse } from 'msw'
 import type { Nft, NftCategory, NftFacets, Network, Paginated, SortOption } from '@/types/api'
 import { CATEGORY_OPTIONS, NETWORK_OPTIONS } from '../fixtures'
+import { compareWei, toWei } from '@/lib/eth'
 import { getDb } from '../db'
 import { applyCatalogListDelay, applyNetworkDelay, isScenario, maybeFailConnection, maybeServerError } from '../scenarios'
 import { errors } from '../respond'
 
 function matchesFilters(
   nft: Nft,
-  filters: { q: string | null; categories: string[]; network: string[]; minPrice: number | null; maxPrice: number | null },
+  filters: { q: string | null; categories: string[]; network: string[]; minPrice: bigint | null; maxPrice: bigint | null },
 ): boolean {
   if (filters.q) {
     const needle = filters.q.toLowerCase()
@@ -16,19 +17,24 @@ function matchesFilters(
   }
   if (filters.categories.length && !filters.categories.includes(nft.category)) return false
   if (filters.network.length && !filters.network.includes(nft.network)) return false
-  const price = Number(nft.priceEth)
+  const price = toWei(nft.priceEth)
   if (filters.minPrice != null && price < filters.minPrice) return false
   if (filters.maxPrice != null && price > filters.maxPrice) return false
   return true
+}
+
+/** Limite de preço vindo da URL, em wei; ignora valores que não são decimais. */
+function priceBound(param: string | null): bigint | null {
+  return param && /^\d+(\.\d+)?$/.test(param) ? toWei(param) : null
 }
 
 function sortNfts(nfts: Nft[], sort: SortOption): Nft[] {
   const copy = [...nfts]
   switch (sort) {
     case 'price_asc':
-      return copy.sort((a, b) => Number(a.priceEth) - Number(b.priceEth))
+      return copy.sort((a, b) => compareWei(toWei(a.priceEth), toWei(b.priceEth)))
     case 'price_desc':
-      return copy.sort((a, b) => Number(b.priceEth) - Number(a.priceEth))
+      return copy.sort((a, b) => compareWei(toWei(b.priceEth), toWei(a.priceEth)))
     case 'trending':
       return copy.sort((a, b) => b.reviewsCount * b.rating - a.reviewsCount * a.rating)
     case 'recent':
@@ -69,8 +75,8 @@ export const nftHandlers = [
         q,
         categories,
         network,
-        minPrice: minPriceParam ? Number(minPriceParam) : null,
-        maxPrice: maxPriceParam ? Number(maxPriceParam) : null,
+        minPrice: priceBound(minPriceParam),
+        maxPrice: priceBound(maxPriceParam),
       }),
     )
     const sorted = sortNfts(filtered, sort)
@@ -103,8 +109,8 @@ export const nftHandlers = [
     const network = url.searchParams.getAll('network') as Network[]
     const minPriceParam = url.searchParams.get('minPrice')
     const maxPriceParam = url.searchParams.get('maxPrice')
-    const minPrice = minPriceParam ? Number(minPriceParam) : null
-    const maxPrice = maxPriceParam ? Number(maxPriceParam) : null
+    const minPrice = priceBound(minPriceParam)
+    const maxPrice = priceBound(maxPriceParam)
 
     const db = await getDb()
     const empty = isScenario('empty-catalog')

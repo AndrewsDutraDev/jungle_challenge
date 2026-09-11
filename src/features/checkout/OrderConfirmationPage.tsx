@@ -144,15 +144,17 @@ export function OrderConfirmationPage() {
 
           <div className="mt-6 border-t border-border pt-6 text-center">
             <p className="text-body leading-[22px] text-text-secondary">
-              Transação confirmada na simulação Kurio. A propriedade foi transferida para sua carteira conectada e registrada na rede.
+              {order.recipientAddress
+                ? `Transação confirmada na simulação Kurio. A propriedade foi transferida para a carteira ${order.recipientAddress.slice(0, 6)}…${order.recipientAddress.slice(-4)} e registrada na rede.`
+                : 'Transação confirmada na simulação Kurio. A propriedade foi transferida para sua carteira conectada e registrada na rede.'}
             </p>
-            <Button
-              className="mt-6 h-auto rounded-[5px] p-4 text-[16px] font-bold"
-              disabled
-              title="Simulação — não há blockchain real por trás deste pedido"
-            >
-              Ver no Etherscan
-            </Button>
+            {order.transactionHash && (
+              <Button asChild className="mt-6 h-auto rounded-[5px] p-4 text-[16px] font-bold">
+                <Link to="/explorador/$hash" params={{ hash: order.transactionHash }}>
+                  Ver no explorador (simulado)
+                </Link>
+              </Button>
+            )}
             <div>
               <Button asChild variant="link" className="mt-3 text-text-accent">
                 <Link to="/">Voltar ao início</Link>

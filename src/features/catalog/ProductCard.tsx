@@ -7,13 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { useSessionQuery } from '@/lib/api/auth'
 import { useFavoritesQuery, useToggleFavoriteMutation } from '@/lib/api/favorites'
 import { cn } from '@/lib/utils'
+import { toWei } from '@/lib/eth'
 
 export function ProductCard({ nft }: { nft: Nft }) {
   const { data: session } = useSessionQuery()
   const { data: favorites } = useFavoritesQuery(Boolean(session))
   const toggleFavorite = useToggleFavoriteMutation()
   const isFavorite = favorites?.some((f) => f.id === nft.id) ?? false
-  const priceDropped = nft.previousPriceEth != null && Number(nft.previousPriceEth) > Number(nft.priceEth)
+  const priceDropped = nft.previousPriceEth != null && toWei(nft.previousPriceEth) > toWei(nft.priceEth)
   const soldOut = nft.editionsAvailable === 0
 
   return (

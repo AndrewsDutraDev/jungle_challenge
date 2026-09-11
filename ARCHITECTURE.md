@@ -17,7 +17,8 @@ src/
   app/            bootstrap (providers de Query e Router, montagem do tempo real)
   routes/         rotas TanStack Router (uma por tela + layout raiz)
   features/       uma pasta por tela/domínio (catalog, nft-detail, cart,
-                  checkout, auth, account) — página e componentes exclusivos
+                  checkout, auth, account, explorer) — página e componentes
+                  exclusivos
   components/
     ui/           componentes shadcn/ui (Button, Dialog, Select, Tabs…) sobre
                   Radix UI, adaptados à identidade do Figma
@@ -75,6 +76,12 @@ tipo nos dois lados.
 - Base `/api`, JSON nos dois sentidos.
 - Valores em ETH trafegam sempre como **string decimal** (`"1.25"`), nunca
   `number`. Quantidades são inteiros.
+- Contas em ETH (subtotal, desconto, taxa, total, variação de preço,
+  filtros e ordenação por preço) são feitas em inteiros — wei, 18 casas —
+  por `src/lib/eth.ts`, sem passar por `number`. Desconto e taxa são
+  arredondados a 4 casas antes de somar, então subtotal − desconto + taxa
+  bate exatamente com o total. A formatação na tela também arredonda a
+  partir da string.
 - Autenticação por `Authorization: Bearer <token>`. Rotas de carrinho e
   cotação aceitam visitante pelo header `X-Guest-Id`.
 - Erros sempre no formato:
@@ -149,14 +156,36 @@ ou que a quantidade passou da disponibilidade.
 
 | Método e rota | Corpo | Resposta |
 | --- | --- | --- |
-| `POST /api/orders` | `CreateOrderPayload { walletId, network, couponCode, idempotencyKey, quotedVersions, quotedTotalEth }` | `201 Order` (pendente) · `200 Order` (mesma key e mesmo conteúdo) · 400 (key ausente, carteira inválida ou desconectada, carrinho vazio) · 409 `AVAILABILITY_CONFLICT` · 409 `IDEMPOTENCY_MISMATCH` |
+| `POST /api/orders` | `CreateOrderPayload { walletId, network, couponCode, idempotencyKey, quotedVersions, quotedTotalEth, collector, recipientAddress }` | `201 Order` (pendente) · `200 Order` (mesma key e mesmo conteúdo) · 400 (key ausente, dados do colecionador inválidos com `fields` por campo, carteira inválida ou desconectada, carrinho vazio) · 409 `AVAILABILITY_CONFLICT` · 409 `IDEMPOTENCY_MISMATCH` |
 | `GET /api/orders/:id` | — | `Order` (estado atual e recibo) · 403 · 404 |
 | `GET /api/orders` | — | `{ items: Order[] }` |
 
+`collector` (`CollectorDetails`) traz os dados do colecionador do
+pagamento: `displayName`, `username`, `profileName` e os opcionais
+`ensName`, `secondaryEns`, `referralCode` e `note` (vazios como `null`).
+`recipientAddress` é a carteira que recebe os NFTs quando o colecionador
+marca "Usar outra carteira"; senão, `null`. As regras de validação ficam em
+`src/lib/checkout/collector.ts` e valem para o formulário e para a API — as
+chaves de `fields` são os ids dos campos, e a tela mostra cada erro no seu
+campo. "Mesmo conteúdo", na idempotência, inclui carteira, rede, destino e
+dados do colecionador.
+
 O `Order` guarda um retrato do pedido: itens com `unitPriceEth` e
 quantidade do momento da compra, subtotal, desconto, taxa, total, rede,
-carteira e `transactionHash` simulado. Mudanças posteriores no catálogo não
-alteram o recibo.
+carteira, dados do colecionador, destino e `transactionHash` simulado.
+Mudanças posteriores no catálogo não alteram o recibo.
+
+### Explorador de blocos (público)
+
+| Método e rota | Resposta |
+| --- | --- |
+| `GET /api/explorer/tx/:hash` | `ExplorerTransaction { hash, network, status, blockNumber, timestamp, from, to, valueEth, feeEth, tokens }` · 404 |
+
+Simula um explorador como o Etherscan: o recibo do pedido confirmado leva a
+`/explorador/:hash`. Como num explorador real, responde a qualquer um que
+tenha o hash, mas só com o que estaria na blockchain — endereços, tokens e
+valores —, nunca nome, e-mail ou dados do colecionador. O número do bloco é
+derivado do hash, então é sempre o mesmo.
 
 ### Perfil (autenticado)
 
@@ -253,7 +282,7 @@ versão do recurso depois da mudança.
   30 minutos.
 - A sessão é consultada no boot (`GET /api/auth/session`, cache de 60s).
   Recarregar a página recupera a sessão pelo token.
-- Rotas privadas (checkout, pedido, perfil, carteiras) passam por
+- Rotas privadas (checkout, pedido, perfil, favoritos, carteiras) passam por
   `requireSession`; sem sessão, vão para `/login?redirect=<destino>` e o
   login devolve o usuário ao destino.
 - Qualquer resposta `SESSION_EXPIRED` (navegação ou checkout) limpa o
@@ -442,8 +471,17 @@ aplicação e MSW em paralelo foi testado e piorou o LCP mobile — ver
   colecionador aceitar os novos valores — nunca se confirma em silêncio um
   total que ele não viu.
 - **Ações fora do escopo** aparecem desabilitadas ou com mensagem neutra —
-  login social, "Ver no Etherscan", newsletter, itens "Criadores" e
-  "Aprenda" do menu —, nunca com cara de sucesso.
+  login social, newsletter, itens "Criadores" e "Aprenda" do menu —, nunca
+  com cara de sucesso.
+- **Atualização em segundo plano**: numa nova busca ou revalidação, o
+  catálogo mantém os resultados atuais visíveis (esmaecidos quando são da
+  busca anterior) e mostra "Atualizando resultados…" por cima da grade, sem
+  deslocar o layout.
+- **Favoritos** têm página própria (`/favorites`), acessível pela aba do
+  mobile, pelo menu da conta e pela navegação da área do colecionador.
+- **Validação do pagamento**: ao confirmar, cada campo inválido mostra a
+  mensagem logo abaixo e o foco vai para o primeiro deles; erros de campo
+  devolvidos pela API aparecem do mesmo jeito.
 - **Erros recuperáveis** trazem a ação de recuperação no próprio lugar
   ("Tentar novamente" no catálogo, "Verificar status do pedido" no checkout).
 
@@ -457,8 +495,13 @@ aplicação e MSW em paralelo foi testado e piorou o LCP mobile — ver
   novamente); trocar de carteira é feito pelos próprios cartões. Tipos de
   carteira sem cadastro aparecem desabilitados.
 - **Autenticação no desktop**: modal com rota própria (ver Decisões de UX).
-- **Compartilhar** (detalhe) e **"Ver no Etherscan"** (recibo) são
-  ilustrativos: não há rede social nem blockchain reais.
+- **Compartilhar** (detalhe) é ilustrativo: não há rede social real.
+- **"Ver no Etherscan"** (recibo) virou **"Ver no explorador (simulado)"** e
+  abre o explorador de blocos simulado da própria aplicação
+  (`/explorador/:hash`) — não há blockchain real, e o rótulo não promete o
+  Etherscan.
+- **Rodapé no tablet**: as quatro colunas do Figma (desktop) só cabem a
+  partir de 1024px; entre 768px e 1023px os blocos ficam em duas colunas.
 
 ### Substituições de assets
 
@@ -502,9 +545,6 @@ Ver README para como rodar. Decisões notáveis:
 - **Performance mobile no Lighthouse** abaixo de 90 (87–88): o LCP depende
   do bundle da aplicação e do worker do MSW, que precisa subir antes da
   primeira tela. Análise completa em `reports/lighthouse/README.md`.
-- **Cálculos em ETH no servidor simulado** usam `number` do JavaScript com
-  arredondamento a 4 casas; os valores trafegam sempre como string decimal,
-  mas um backend real deveria calcular em inteiros (wei).
 - **Cenário `out-of-order`** só afeta as três primeiras listagens depois de
   cada carregamento da página.
 - **Baselines de regressão visual** são por sistema operacional; as

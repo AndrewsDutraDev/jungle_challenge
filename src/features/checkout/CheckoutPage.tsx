@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatEth, truncateAddress } from '@/lib/format'
 import { getOrCreateIdempotencyKey, clearIdempotencyKey } from '@/lib/checkout/idempotency'
+import { validateCheckoutForm, type CheckoutFormValues } from '@/lib/checkout/collector'
 import { KurioApiError } from '@/lib/api/client'
 import { useIsMobile } from '@/lib/use-media-query'
 import { cn } from '@/lib/utils'
@@ -53,6 +54,7 @@ export function CheckoutPage() {
   const [otherAddress, setOtherAddress] = useState('')
   const [selectedWalletId, setSelectedWalletId] = useState<string | undefined>(undefined)
   const [connectFailure, setConnectFailure] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [awaitingRecovery, setAwaitingRecovery] = useState(false)
 
@@ -114,6 +116,40 @@ export function CheckoutPage() {
     disconnectWallet.mutate(selectedWallet.id)
   }
 
+  // Dados do colecionador como vão para a API: textos aparados, opcionais
+  // vazios como `null` e a carteira de destino só com "Usar outra carteira".
+  const formValues: CheckoutFormValues = {
+    displayName: displayName.trim(),
+    username: username.trim(),
+    profileName: profileName.trim(),
+    ensName: ensName.trim() || null,
+    secondaryEns: secondaryEns.trim() || null,
+    referralCode: referralCode.trim() || null,
+    note: note.trim() || null,
+    recipientAddress: useOtherWallet ? otherAddress.trim() : null,
+  }
+
+  function clearFieldError(id: string) {
+    if (!fieldErrors[id]) return
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function editField(id: string, setter: (value: string) => void) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setter(e.target.value)
+      clearFieldError(id)
+    }
+  }
+
+  /** Associa o campo à sua mensagem de erro (`aria-invalid` + `aria-describedby`). */
+  function errorProps(id: string) {
+    return fieldErrors[id] ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` } : {}
+  }
+
   const quotedVersions = useMemo(() => {
     const map: Record<string, number> = {}
     for (const line of quote?.lines ?? []) map[line.nftId] = line.nftVersion
@@ -126,6 +162,7 @@ export function CheckoutPage() {
     setAwaitingRecovery(false)
 
     const idempotencyKey = getOrCreateIdempotencyKey()
+    const { recipientAddress, ...collector } = formValues
 
     try {
       const order = await createOrder.mutateAsync({
@@ -135,6 +172,8 @@ export function CheckoutPage() {
         idempotencyKey,
         quotedVersions,
         quotedTotalEth: quote.totalEth,
+        collector,
+        recipientAddress,
       })
       navigate({ to: '/pedido/$orderId', params: { orderId: order.id } })
     } catch (err) {
@@ -147,6 +186,11 @@ export function CheckoutPage() {
         clearIdempotencyKey()
         setSubmitError('Preço, disponibilidade ou taxas mudaram desde a última cotação. Revise o resumo e confirme novamente.')
         refetchQuote()
+      } else if (err instanceof KurioApiError && err.code === 'VALIDATION_ERROR' && err.fields) {
+        // Erros de campo devolvidos pela API aparecem no próprio campo.
+        clearIdempotencyKey()
+        setFieldErrors(err.fields)
+        setSubmitError(err.message)
       } else if (err instanceof KurioApiError) {
         setSubmitError(err.message)
       } else {
@@ -157,6 +201,14 @@ export function CheckoutPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const errors = validateCheckoutForm(formValues)
+    setFieldErrors(errors)
+    const firstInvalid = Object.keys(errors)[0]
+    if (firstInvalid) {
+      setSubmitError('Revise os campos destacados antes de confirmar.')
+      document.getElementById(firstInvalid)?.focus()
+      return
+    }
     attemptSubmit()
   }
 
@@ -167,15 +219,7 @@ export function CheckoutPage() {
   // recuperação e o botão "Verificar status do pedido" ficariam inacessíveis.
   const isEmpty = !cartLoading && (!cart || cart.items.length === 0) && !awaitingRecovery
   const disableSubmit =
-    createOrder.isPending ||
-    !selectedWallet ||
-    connection !== 'connected' ||
-    quoteLoading ||
-    !quote ||
-    quoteChanged ||
-    overAvailable ||
-    !displayName ||
-    !username
+    createOrder.isPending || !selectedWallet || connection !== 'connected' || quoteLoading || !quote || quoteChanged || overAvailable
   const noWallets = !walletsLoading && (!wallets || wallets.length === 0)
 
   if (isEmpty) {
@@ -273,7 +317,7 @@ export function CheckoutPage() {
   */
   if (isMobile) {
     return (
-      <form onSubmit={handleSubmit} className="flex min-h-[calc(100svh-68px)] flex-col px-7 pb-8 pt-8">
+      <form onSubmit={handleSubmit} noValidate className="flex min-h-[calc(100svh-68px)] flex-col px-7 pb-8 pt-8">
         <div className="flex flex-col gap-4">
           {/* O frame do Figma tem 414px; abaixo de 400px o espaço entre voltar e
               título encolhe para o título caber numa linha. */}
@@ -408,13 +452,29 @@ export function CheckoutPage() {
               <Label htmlFor="displayName" className="text-[14px]">
                 Nome de exibição *
               </Label>
-              <Input id="displayName" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5" />
+              <Input
+                id="displayName"
+                required
+                value={displayName}
+                onChange={editField('displayName', setDisplayName)}
+                className="mt-1.5"
+                {...errorProps('displayName')}
+              />
+              <FieldError id="displayName" message={fieldErrors.displayName} />
             </div>
             <div>
               <Label htmlFor="username" className="text-[14px]">
                 Nome de usuário *
               </Label>
-              <Input id="username" required value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" />
+              <Input
+                id="username"
+                required
+                value={username}
+                onChange={editField('username', setUsername)}
+                className="mt-1.5"
+                {...errorProps('username')}
+              />
+              <FieldError id="username" message={fieldErrors.username} />
             </div>
           </section>
 
@@ -477,18 +537,34 @@ export function CheckoutPage() {
         / <span className="text-text-accent">Pagamento</span>
       </p>
 
-      <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_380px]">
+      <form onSubmit={handleSubmit} noValidate className="grid gap-10 lg:grid-cols-[1fr_380px]">
         <div className="space-y-8">
           <section>
             <h2 className="mb-4 text-body-lg font-bold text-text-primary">Perfil do colecionador</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="displayName">Nome de exibição *</Label>
-                <Input id="displayName" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5" />
+                <Input
+                  id="displayName"
+                  required
+                  value={displayName}
+                  onChange={editField('displayName', setDisplayName)}
+                  className="mt-1.5"
+                  {...errorProps('displayName')}
+                />
+                <FieldError id="displayName" message={fieldErrors.displayName} />
               </div>
               <div>
                 <Label htmlFor="username">Nome de usuário *</Label>
-                <Input id="username" required value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" />
+                <Input
+                  id="username"
+                  required
+                  value={username}
+                  onChange={editField('username', setUsername)}
+                  className="mt-1.5"
+                  {...errorProps('username')}
+                />
+                <FieldError id="username" message={fieldErrors.username} />
               </div>
               <div>
                 <Label htmlFor="network">Rede *</Label>
@@ -507,7 +583,15 @@ export function CheckoutPage() {
               </div>
               <div>
                 <Label htmlFor="profileName">Nome do perfil *</Label>
-                <Input id="profileName" required value={profileName} onChange={(e) => setProfileName(e.target.value)} className="mt-1.5" />
+                <Input
+                  id="profileName"
+                  required
+                  value={profileName}
+                  onChange={editField('profileName', setProfileName)}
+                  className="mt-1.5"
+                  {...errorProps('profileName')}
+                />
+                <FieldError id="profileName" message={fieldErrors.profileName} />
               </div>
               <div>
                 <Label htmlFor="walletAddress">Endereço da carteira *</Label>
@@ -515,20 +599,24 @@ export function CheckoutPage() {
                   id="walletAddress"
                   readOnly={!useOtherWallet}
                   value={useOtherWallet ? otherAddress : (selectedWallet?.address ?? '')}
-                  onChange={(e) => setOtherAddress(e.target.value)}
+                  onChange={editField('walletAddress', setOtherAddress)}
                   placeholder="Endereço 0x da carteira"
                   className="mt-1.5"
+                  {...errorProps('walletAddress')}
                 />
+                <FieldError id="walletAddress" message={fieldErrors.walletAddress} />
               </div>
               <div>
                 <Label htmlFor="secondaryEns">ENS ou carteira secundária (opcional)</Label>
                 <Input
                   id="secondaryEns"
                   value={secondaryEns}
-                  onChange={(e) => setSecondaryEns(e.target.value)}
+                  onChange={editField('secondaryEns', setSecondaryEns)}
                   placeholder={selectedWallet?.ensName ?? 'voce.eth'}
                   className="mt-1.5"
+                  {...errorProps('secondaryEns')}
                 />
+                <FieldError id="secondaryEns" message={fieldErrors.secondaryEns} />
               </div>
               <div>
                 <Label htmlFor="walletType">Tipo de carteira *</Label>
@@ -552,8 +640,15 @@ export function CheckoutPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="referral">Código de indicação (opcional)</Label>
-                <Input id="referral" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="mt-1.5" />
+                <Label htmlFor="referralCode">Código de indicação (opcional)</Label>
+                <Input
+                  id="referralCode"
+                  value={referralCode}
+                  onChange={editField('referralCode', setReferralCode)}
+                  className="mt-1.5"
+                  {...errorProps('referralCode')}
+                />
+                <FieldError id="referralCode" message={fieldErrors.referralCode} />
               </div>
               <div>
                 <Label htmlFor="email">E-mail *</Label>
@@ -565,23 +660,28 @@ export function CheckoutPage() {
                   <span className="flex h-11 shrink-0 items-center rounded-md border border-border-soft bg-surface-card px-3 text-body text-text-secondary">
                     .eth
                   </span>
-                  <Input id="ensName" value={ensName} onChange={(e) => setEnsName(e.target.value)} />
+                  <Input id="ensName" value={ensName} onChange={editField('ensName', setEnsName)} {...errorProps('ensName')} />
                 </div>
+                <FieldError id="ensName" message={fieldErrors.ensName} />
               </div>
               <div className="sm:col-span-2">
                 <label className="flex w-fit cursor-pointer items-center gap-2 text-body text-text-secondary">
                   <input
                     type="checkbox"
                     checked={useOtherWallet}
-                    onChange={(e) => setUseOtherWallet(e.target.checked)}
+                    onChange={(e) => {
+                      setUseOtherWallet(e.target.checked)
+                      clearFieldError('walletAddress')
+                    }}
                     className="size-4 accent-primary"
                   />
-                  Usar outra carteira?
+                  Usar outra carteira? (os NFTs vão para o endereço informado)
                 </label>
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="note">Observação do colecionador (opcional)</Label>
-                <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} className="mt-1.5" />
+                <Textarea id="note" value={note} onChange={editField('note', setNote)} className="mt-1.5" {...errorProps('note')} />
+                <FieldError id="note" message={fieldErrors.note} />
               </div>
             </div>
           </section>
@@ -644,6 +744,15 @@ export function CheckoutPage() {
         </aside>
       </form>
     </div>
+  )
+}
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null
+  return (
+    <p id={`${id}-error`} className="mt-1 text-tiny text-danger">
+      {message}
+    </p>
   )
 }
 

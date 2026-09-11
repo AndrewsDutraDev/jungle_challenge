@@ -7,6 +7,7 @@ import { orderHandlers } from './orders'
 import { profileHandlers } from './profile'
 import { walletHandlers } from './wallets'
 import { metaHandlers } from './meta'
+import { explorerHandlers } from './explorer'
 import { socketHandler } from '../socket'
 
 export const handlers = [
@@ -18,6 +19,7 @@ export const handlers = [
   ...orderHandlers,
   ...profileHandlers,
   ...walletHandlers,
+  ...explorerHandlers,
   ...metaHandlers,
   socketHandler,
 ]

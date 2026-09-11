@@ -40,7 +40,7 @@ export function MobileTabBar() {
     >
       <ul className="mx-auto flex h-[68px] max-w-lg items-center justify-around px-2">
         <TabItem to="/" label="Início" active={pathname === '/'} icon={Home} />
-        <TabItem to="/profile" label="Favoritos" active={pathname === '/profile'} icon={Heart} />
+        <TabItem to="/favorites" label="Favoritos" active={pathname === '/favorites'} icon={Heart} />
 
         <li className="relative -mt-8">
           <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
@@ -93,7 +93,7 @@ function TabItem({
   active,
   badge = 0,
 }: {
-  to: '/' | '/cart' | '/profile' | '/login'
+  to: '/' | '/cart' | '/favorites' | '/profile' | '/login'
   label: string
   icon: typeof Home
   active: boolean

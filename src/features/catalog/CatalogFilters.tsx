@@ -109,7 +109,7 @@ export function CatalogFilters({ search, onChange }: CatalogFiltersProps) {
             aria-label="Faixa de preço em ETH"
           />
           <p className="text-[15px] text-foreground">
-            Preço: {formatEth(priceDraft[0])} – {formatEth(priceDraft[1])}
+            Preço: {formatEth(priceDraft[0].toFixed(4))} – {formatEth(priceDraft[1].toFixed(4))}
           </p>
           <Button
             size="sm"

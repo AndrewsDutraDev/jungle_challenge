@@ -33,7 +33,9 @@ export function NftArt({ seed, palette, className, title, src, sizes = '250px', 
         width={500}
         height={500}
         loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : undefined}
+        // React 18 não reconhece `fetchPriority` (só o 19) e avisa no console;
+        // em minúsculas vira o atributo HTML `fetchpriority`, que o navegador entende.
+        {...(priority ? { fetchpriority: 'high' } : {})}
         decoding={priority ? 'sync' : 'async'}
         onError={() => setFailed(true)}
         className={cn('h-full w-full object-cover', className)}

@@ -18,4 +18,5 @@ export const queryKeys = {
   },
   profile: () => ['profile'] as const,
   wallets: () => ['wallets'] as const,
+  explorerTransaction: (hash: string) => ['explorer', 'tx', hash] as const,
 }

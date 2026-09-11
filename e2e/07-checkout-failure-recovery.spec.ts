@@ -60,6 +60,24 @@ test.describe('Checkout — falhas e recuperação', () => {
     expect(orders.items).toHaveLength(0)
   })
 
+  test('dados do colecionador inválidos mostram o erro no campo e não criam pedido', async ({ page }) => {
+    await loginAs(page, SEED_USERS.ana)
+    await addFirstNftToCartAndReachCheckout(page)
+
+    const displayName = page.locator('#displayName')
+    await displayName.fill('')
+    await page.getByRole('button', { name: 'Confirmar compra' }).click()
+
+    await expect(displayName).toHaveAttribute('aria-invalid', 'true')
+    await expect(displayName).toHaveAttribute('aria-describedby', 'displayName-error')
+    await expect(page.locator('#displayName-error')).toContainText('nome de exibição')
+    await expect(displayName).toBeFocused()
+    await expect(page).toHaveURL(/\/checkout/)
+
+    const orders = await fetchOrders(page)
+    expect(orders.items).toHaveLength(0)
+  })
+
   test('clique repetido em "Confirmar compra" não duplica o pedido', async ({ page }) => {
     await loginAs(page, SEED_USERS.ana)
     await addFirstNftToCartAndReachCheckout(page)

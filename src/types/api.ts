@@ -206,6 +206,17 @@ export interface OrderItem {
   subtotalEth: EthAmount
 }
 
+/** Dados do colecionador informados no pagamento. Opcionais vazios trafegam como `null`. */
+export interface CollectorDetails {
+  displayName: string
+  username: string
+  profileName: string
+  ensName: string | null
+  secondaryEns: string | null
+  referralCode: string | null
+  note: string | null
+}
+
 export interface Order {
   id: string
   status: OrderStatus
@@ -217,6 +228,10 @@ export interface Order {
   walletId: string
   network: Network
   transactionHash: string | null
+  /** Retrato dos dados do colecionador no momento da compra. */
+  collector: CollectorDetails | null
+  /** Carteira que recebe os NFTs, quando diferente da carteira de pagamento. */
+  recipientAddress: string | null
   createdAt: string
   updatedAt: string
   version: number
@@ -230,6 +245,27 @@ export interface CreateOrderPayload {
   /** Versões dos NFTs vistas na última cotação — usadas para detectar mudanças de preço/disponibilidade. */
   quotedVersions: Record<string, number>
   quotedTotalEth: EthAmount
+  collector: CollectorDetails
+  /** Preenchido quando o colecionador marca "Usar outra carteira". */
+  recipientAddress: string | null
+}
+
+// ---------------------------------------------------------------------------
+// Explorador de blocos (simulado)
+// ---------------------------------------------------------------------------
+
+/** Só o que seria público numa blockchain real — nunca dados da conta. */
+export interface ExplorerTransaction {
+  hash: string
+  network: Network
+  status: 'success'
+  blockNumber: number
+  timestamp: string
+  from: string | null
+  to: string | null
+  valueEth: EthAmount
+  feeEth: EthAmount
+  tokens: Array<{ nftId: string; name: string; tokenId: string; quantity: number }>
 }
 
 // ---------------------------------------------------------------------------

@@ -47,6 +47,21 @@ test.describe('Estados de carregamento — skeletons, falha e recuperação', ()
     await expect(page.getByText('Subtotal')).toBeVisible({ timeout: 15_000 })
   })
 
+  test('nova busca mantém os resultados atuais na tela e sinaliza a atualização em segundo plano', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('a[href^="/nft/"]').first().waitFor()
+
+    // Rede lenta a partir daqui, sem recarregar: a próxima busca demora.
+    await page.evaluate(() => window.localStorage.setItem('kurio:scenario', 'slow-network'))
+    await page.getByLabel('Ordenar por:').click()
+    await page.getByRole('option', { name: 'Maior preço' }).click()
+
+    const indicator = page.getByText('Atualizando resultados…')
+    await expect(indicator).toBeVisible()
+    await expect(page.getByTestId('catalog-grid')).toBeVisible()
+    await expect(indicator).toBeHidden({ timeout: 10_000 })
+  })
+
   test('falha de servidor mostra feedback de erro e nova tentativa recupera o conteúdo', async ({ page }) => {
     await useScenario(page, 'server-errors') // toda chamada de dados responde 503
     await page.goto('/')

@@ -36,11 +36,20 @@ com esses dois comandos.
 
 ## Variáveis de ambiente
 
-Nenhuma é obrigatória — a aplicação roda sem `.env`.
+Nenhuma é obrigatória — a aplicação, os testes e a auditoria rodam sem `.env`.
 
-| Variável | Padrão | Efeito |
-| --- | --- | --- |
-| `VITE_ENABLE_MOCKS` | ligado | `false` desliga o MSW. Sem backend real, a aplicação fica sem API — serve só para depuração. É lida no build (`VITE_ENABLE_MOCKS=false npm run build`). |
+| Variável | Usada por | Padrão | Efeito |
+| --- | --- | --- | --- |
+| `VITE_ENABLE_MOCKS` | build da aplicação | ligado | `false` desliga o MSW. Sem backend real, a aplicação fica sem API — serve só para depuração. É lida no build (`VITE_ENABLE_MOCKS=false npm run build`). |
+| `PORT` | `npm run dev` | `5173` | Porta do servidor de desenvolvimento. |
+| `CI` | Playwright | não definida | Quando definida: uma nova tentativa por teste, 2 workers, `test.only` proibido e o preview sempre sobe do zero (sem reaproveitar um servidor já rodando na porta 4173). |
+| `PLAYWRIGHT_CHROMIUM_PATH` | Playwright e `npm run lighthouse` | não definida | Caminho de um Chromium já instalado, usado no lugar do navegador baixado pelo Playwright (testes, com `--no-sandbox`) e do Chrome encontrado no sistema (Lighthouse). Ignorada se o arquivo não existir. |
+| `LH_BASE_URL` | `npm run lighthouse` | `http://localhost:4173` | Endereço auditado. |
+
+A auditoria Lighthouse abre o Chrome (ou Chromium) instalado na máquina,
+localizado automaticamente pelo `chrome-launcher`. Sem um Chrome instalado,
+aponte `PLAYWRIGHT_CHROMIUM_PATH` para um Chromium — por exemplo, o que
+`npx playwright install chromium` baixa.
 
 ## Comandos
 
@@ -125,6 +134,7 @@ e a cada reset — a mesma sequência de ações produz sempre o mesmo resultado
 | Preço muda durante a compra | Cenário `price-drift` com um item no carrinho, ou a chamada de controle abaixo com o checkout aberto. |
 | Edição esgota na compra | Cenário `sold-out` e confirme a compra. |
 | Carteira recusa / desconecta | Cenário `wallet-declined`; no pagamento, **Desconectar** e depois **Conectar**. |
+| Dados do pagamento inválidos | No pagamento, apague o nome de exibição (ou marque "Usar outra carteira" com um endereço inválido) e confirme: o erro aparece no campo. |
 | Pagamento recusado | Cenário `order-declined` e confirme a compra. |
 | Timeout com recuperação | Cenário `order-timeout` e confirme a compra. |
 | Evento duplicado ou atrasado | Use a chamada de replay abaixo com o `eventId` devolvido por uma alteração. |

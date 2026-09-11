@@ -3,6 +3,7 @@ import { toSocketIo } from '@mswjs/socket.io-binding'
 import type { NftUpdatedEvent, OrderUpdatedEvent, RealtimeEvent } from '@/types/api'
 import { createId, getDb, saveDb } from './db'
 import { isScenario } from './scenarios'
+import { fromWei, maxWei, mulDiv, roundWei, toWei } from '@/lib/eth'
 
 /**
  * Servidor Socket.IO simulado.
@@ -160,8 +161,11 @@ export function resetRealtimeState() {
   driftTick = 0
 }
 
-function roundEth(value: number): string {
-  return Math.max(0.001, value).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') || '0'
+const MIN_DRIFT_PRICE = toWei('0.001')
+
+/** Preço × percentual (ex.: 115 = +15%), em wei, arredondado a 4 casas e nunca abaixo de 0.001. */
+function driftPrice(priceEth: string, percent: bigint): string {
+  return fromWei(maxWei(MIN_DRIFT_PRICE, roundWei(mulDiv(toWei(priceEth), percent, 100n), 4)), 4)
 }
 
 /**
@@ -185,10 +189,10 @@ export function startPriceDriftDriver() {
     const nft = db.nfts.find((n) => n.id === candidates[tick % candidates.length])
     if (!nft) return
 
-    const direction = tick % 2 === 0 ? 1.15 : 0.85
+    const percent = tick % 2 === 0 ? 115n : 85n
     const loseEdition = tick % 3 === 2 && nft.editionsAvailable > 0
     await applyNftChange(nft.id, {
-      priceEth: roundEth(Number(nft.priceEth) * direction),
+      priceEth: driftPrice(nft.priceEth, percent),
       editionsAvailable: loseEdition ? nft.editionsAvailable - 1 : undefined,
     })
   }, PRICE_DRIFT_INTERVAL_MS)

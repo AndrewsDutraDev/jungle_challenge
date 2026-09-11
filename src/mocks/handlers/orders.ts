@@ -1,12 +1,15 @@
 import { http, HttpResponse } from 'msw'
 import type { CreateOrderPayload, Order, OrderStatus } from '@/types/api'
 import { createId, getDb, saveDb, type DbOrder, type DbState } from '../db'
+import { sha256Hex } from '../hash'
 import { applyNetworkDelay, isScenario, maybeFailConnection, sleep } from '../scenarios'
 import { errors } from '../respond'
 import { resolveSession } from '../session'
 import { getOrCreateCart, ownerKeyForUser } from './cart-shared'
 import { computeQuote } from './quote-shared'
 import { applyNftChange, emitOrderUpdated } from '../socket'
+import { fromWei, toWei } from '@/lib/eth'
+import { validateCheckoutForm } from '@/lib/checkout/collector'
 
 /** Tempo até a "rede de pagamento" decidir um pedido pendente — fixo, para ser reproduzível. */
 const ORDER_OUTCOME_DELAY_MS = 3000
@@ -28,6 +31,8 @@ function toApiOrder(order: DbOrder, nftsById: Map<string, NftMeta>): Order {
     walletId: order.walletId,
     network: order.network,
     transactionHash: order.transactionHash,
+    collector: order.collector ?? null,
+    recipientAddress: order.recipientAddress ?? null,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     version: order.version,
@@ -42,7 +47,7 @@ function toApiOrder(order: DbOrder, nftsById: Map<string, NftMeta>): Order {
         tokenId: meta?.tokenId ?? item.nftId,
         quantity: item.quantity,
         unitPriceEth: item.unitPriceEth,
-        subtotalEth: (Number(item.unitPriceEth) * item.quantity).toFixed(4),
+        subtotalEth: fromWei(toWei(item.unitPriceEth) * BigInt(item.quantity), 4),
       }
     }),
   }
@@ -56,7 +61,8 @@ async function resolveOrderIfDue(order: DbOrder): Promise<DbOrder> {
   const db = await getDb()
   const declined = isScenario('order-declined')
   order.status = declined ? 'declined' : 'confirmed'
-  order.transactionHash = declined ? null : `0x${createId('tx').replace(/[^a-f0-9]/gi, '').padEnd(64, '0').slice(0, 64)}`
+  // Referência de transação simulada: 64 dígitos hexadecimais, estável para o pedido.
+  order.transactionHash = declined ? null : `0x${await sha256Hex(`kurio-tx:${order.id}:${order.idempotencyKey}`)}`
   order.updatedAt = new Date().toISOString()
   order.version += 1
   saveDb()
@@ -105,13 +111,22 @@ export const orderHandlers = [
 
     const payload = (await request.json()) as CreateOrderPayload
     if (!payload.idempotencyKey) return errors.validation('idempotencyKey é obrigatória.')
+    if (!payload.collector) return errors.validation('Dados do colecionador ausentes.')
+
+    // Mesmas regras do formulário: a API não confia só na validação da tela.
+    const fieldErrors = validateCheckoutForm({ ...payload.collector, recipientAddress: payload.recipientAddress ?? null })
+    if (Object.keys(fieldErrors).length) return errors.validation('Verifique os dados do colecionador.', fieldErrors)
 
     const db = await getDb()
 
     // Recuperação por idempotência: mesma tentativa retorna o mesmo pedido, sem duplicar.
     const existing = db.orders.find((o) => o.userId === context.user.id && o.idempotencyKey === payload.idempotencyKey)
     if (existing) {
-      const sameRequest = existing.walletId === payload.walletId && existing.network === payload.network
+      const sameRequest =
+        existing.walletId === payload.walletId &&
+        existing.network === payload.network &&
+        (existing.recipientAddress ?? null) === (payload.recipientAddress ?? null) &&
+        JSON.stringify(existing.collector ?? null) === JSON.stringify(payload.collector)
       if (!sameRequest) return errors.idempotencyMismatch()
       await resolveOrderIfDue(existing)
       return HttpResponse.json(toApiOrder(existing, nftMetaById(db)), { status: 200 })
@@ -164,6 +179,8 @@ export const orderHandlers = [
       walletId: payload.walletId,
       network: payload.network,
       transactionHash: null,
+      collector: payload.collector,
+      recipientAddress: payload.recipientAddress ?? null,
       createdAt: new Date(now).toISOString(),
       updatedAt: new Date(now).toISOString(),
       version: 1,

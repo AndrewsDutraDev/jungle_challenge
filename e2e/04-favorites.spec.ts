@@ -50,6 +50,42 @@ test.describe('Favoritos', () => {
     await expect(favoriteButton).toHaveAttribute('aria-pressed', 'false')
   })
 
+  test('a página de favoritos lista o NFT favoritado e permite removê-lo', async ({ page }) => {
+    await loginAs(page, SEED_USERS.ana)
+    await page.goto('/')
+    await page.waitForSelector('a[href^="/nft/"]')
+    await page.locator('a[href^="/nft/"]').first().click()
+    await expect(page).toHaveURL(/\/nft\//)
+    const title = page.getByRole('heading', { level: 1 })
+    await expect(title).not.toHaveText(/SEJA DONO/) // o h1 da página inicial some quando o detalhe carrega
+    const name = await title.innerText()
+
+    await page.getByRole('button', { name: 'Favoritar' }).click()
+    await expect(page.getByRole('button', { name: 'Favoritar' })).toHaveAttribute('aria-pressed', 'true')
+
+    await page.goto('/favorites')
+    await expect(page.getByRole('link', { name: `Ver detalhes de ${name}` })).toBeVisible()
+
+    // Desfavoritar pelo card tira o item da lista na hora (atualização otimista).
+    await page.getByRole('button', { name: 'Remover dos favoritos' }).click()
+    await expect(page.getByText('Você ainda não favoritou nenhum NFT.')).toBeVisible()
+
+    // Só recarrega depois de a API confirmar a remoção: o servidor simulado
+    // roda na página, e recarregar no meio da chamada a interromperia.
+    await expect
+      .poll(() =>
+        page.evaluate(async () => {
+          const token = window.localStorage.getItem('kurio:token')
+          const res = await fetch('/api/favorites', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+          return ((await res.json()) as { items: unknown[] }).items.length
+        }),
+      )
+      .toBe(0)
+
+    await page.reload()
+    await expect(page.getByText('Você ainda não favoritou nenhum NFT.')).toBeVisible()
+  })
+
   test('favoritar exige autenticação — visitante é direcionado ao login', async ({ page }) => {
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')

@@ -53,6 +53,12 @@ test.describe('Checkout — compra completa', () => {
     await expect(page.getByText('Detalhes da transação')).toBeVisible()
     const receiptUrl = page.url()
 
+    // Referência da transação e explorador de blocos são simulados.
+    await page.getByRole('link', { name: 'Ver no explorador (simulado)' }).click()
+    await expect(page).toHaveURL(/\/explorador\/0x[0-9a-f]{64}$/)
+    await expect(page.getByText('Explorador simulado — nenhuma transação real')).toBeVisible()
+    await expect(page.getByText('Sucesso')).toBeVisible()
+
     // O carrinho deve ter sido esvaziado após a confirmação.
     await page.goto('/cart')
     await expect(page.getByText('Seu carrinho está vazio')).toBeVisible()
