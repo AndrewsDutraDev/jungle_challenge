@@ -8,12 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { NETWORK_LABELS } from '@/mocks/fixtures'
+import { NETWORK_LABELS, PROVIDER_LABELS } from '@/mocks/fixtures'
 import { truncateAddress } from '@/lib/format'
 import { KurioApiError } from '@/lib/api/client'
 import type { Network, WalletProvider, WalletRole } from '@/types/api'
 
-const PROVIDER_LABELS: Record<WalletProvider, string> = { metamask: 'MetaMask', walletconnect: 'WalletConnect', coinbase: 'Coinbase Wallet' }
 
 export function WalletsPage() {
   const { data: wallets, isLoading } = useWalletsQuery(true)

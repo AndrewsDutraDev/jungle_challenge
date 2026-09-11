@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatEth, truncateAddress } from '@/lib/format'
 import { getOrCreateIdempotencyKey, clearIdempotencyKey } from '@/lib/checkout/idempotency'
 import { KurioApiError } from '@/lib/api/client'
-import { NETWORK_LABELS, NETWORK_OPTIONS } from '@/mocks/fixtures'
+import { NETWORK_LABELS, NETWORK_OPTIONS, PROVIDER_LABELS } from '@/mocks/fixtures'
 import type { Network, Wallet } from '@/types/api'
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'declined'
@@ -37,6 +37,10 @@ export function CheckoutPage() {
   const [network, setNetwork] = useState<Network | undefined>(undefined)
   const [secondaryEns, setSecondaryEns] = useState('')
   const [referralCode, setReferralCode] = useState('')
+  const [profileName, setProfileName] = useState(session?.user.displayName ?? '')
+  const [ensName, setEnsName] = useState('')
+  const [useOtherWallet, setUseOtherWallet] = useState(false)
+  const [otherAddress, setOtherAddress] = useState('')
   const [selectedWalletId, setSelectedWalletId] = useState<string | undefined>(undefined)
   const [connection, setConnection] = useState<ConnectionState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -178,18 +182,19 @@ export function CheckoutPage() {
                 </Select>
               </div>
               <div>
+                <Label htmlFor="profileName">Nome do perfil *</Label>
+                <Input id="profileName" required value={profileName} onChange={(e) => setProfileName(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
                 <Label htmlFor="walletAddress">Endereço da carteira *</Label>
                 <Input
                   id="walletAddress"
-                  readOnly
-                  value={selectedWallet?.address ?? ''}
+                  readOnly={!useOtherWallet}
+                  value={useOtherWallet ? otherAddress : (selectedWallet?.address ?? '')}
+                  onChange={(e) => setOtherAddress(e.target.value)}
                   placeholder="Endereço 0x da carteira"
                   className="mt-1.5"
                 />
-              </div>
-              <div>
-                <Label htmlFor="email">E-mail *</Label>
-                <Input id="email" type="email" required value={session?.user.email ?? ''} disabled className="mt-1.5" />
               </div>
               <div>
                 <Label htmlFor="secondaryEns">ENS ou carteira secundária (opcional)</Label>
@@ -202,8 +207,53 @@ export function CheckoutPage() {
                 />
               </div>
               <div>
+                <Label htmlFor="walletType">Tipo de carteira *</Label>
+                <Select
+                  value={selectedWallet?.provider}
+                  onValueChange={(provider) => {
+                    const match = wallets?.find((w) => w.provider === provider)
+                    if (match) handleSelectWallet(match)
+                  }}
+                >
+                  <SelectTrigger id="walletType" className="mt-1.5">
+                    <SelectValue placeholder="Selecione uma carteira" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wallets?.map((w) => (
+                      <SelectItem key={w.id} value={w.provider}>
+                        {PROVIDER_LABELS[w.provider]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="referral">Código de indicação (opcional)</Label>
                 <Input id="referral" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="email">E-mail *</Label>
+                <Input id="email" type="email" required value={session?.user.email ?? ''} disabled className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="ensName">Nome ENS (opcional)</Label>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="flex h-11 shrink-0 items-center rounded-md border border-border-soft bg-surface-card px-3 text-body text-text-secondary">
+                    .eth
+                  </span>
+                  <Input id="ensName" value={ensName} onChange={(e) => setEnsName(e.target.value)} />
+                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="flex w-fit cursor-pointer items-center gap-2 text-body text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={useOtherWallet}
+                    onChange={(e) => setUseOtherWallet(e.target.checked)}
+                    className="size-4 accent-primary"
+                  />
+                  Usar outra carteira?
+                </label>
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="note">Observação do colecionador (opcional)</Label>

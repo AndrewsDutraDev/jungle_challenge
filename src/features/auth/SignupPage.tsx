@@ -8,11 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useSignupMutation } from '@/lib/api/auth'
 import { KurioApiError } from '@/lib/api/client'
+import { useIsMobile } from '@/lib/use-media-query'
 
 export function SignupPage() {
   const { redirect } = Route.useSearch()
   const navigate = useNavigate()
   const signup = useSignupMutation()
+  const isMobile = useIsMobile()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -47,9 +49,10 @@ export function SignupPage() {
     <AuthCard mode="signup" redirect={redirect}>
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
-          <Label htmlFor="signup-username">Nome de usuário</Label>
+          <Label htmlFor="signup-username" className="sr-only md:not-sr-only">Nome de usuário</Label>
           <Input
             id="signup-username"
+            placeholder="Nome de usuário"
             required
             autoComplete="username"
             value={username}
@@ -65,9 +68,10 @@ export function SignupPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="signup-email">Digite seu e-mail</Label>
+          <Label htmlFor="signup-email" className="sr-only md:not-sr-only">Digite seu e-mail</Label>
           <Input
             id="signup-email"
+            placeholder="Digite seu e-mail"
             type="email"
             required
             autoComplete="email"
@@ -84,9 +88,10 @@ export function SignupPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="signup-password">Senha</Label>
+          <Label htmlFor="signup-password" className="sr-only md:not-sr-only">Senha</Label>
           <PasswordInput
             id="signup-password"
+            placeholder="Senha"
             required
             autoComplete="new-password"
             value={password}
@@ -102,9 +107,10 @@ export function SignupPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="signup-confirm">Confirmar senha</Label>
+          <Label htmlFor="signup-confirm" className="sr-only md:not-sr-only">Confirmar senha</Label>
           <PasswordInput
             id="signup-confirm"
+            placeholder="Confirmar senha"
             required
             autoComplete="new-password"
             value={confirmPassword}
@@ -126,8 +132,8 @@ export function SignupPage() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={signup.isPending}>
-          {signup.isPending ? 'Criando conta…' : 'Criar conta'}
+        <Button type="submit" className="h-14 w-full rounded-[10px] text-[16px] font-bold md:h-11" disabled={signup.isPending}>
+          {signup.isPending ? 'Criando conta…' : isMobile ? 'Criar perfil' : 'Criar conta'}
         </Button>
       </form>
     </AuthCard>

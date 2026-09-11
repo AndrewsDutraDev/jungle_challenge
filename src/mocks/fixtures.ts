@@ -1,4 +1,4 @@
-import type { Nft, NftAttribute, NftCategory, Network } from '@/types/api'
+import type { Nft, NftAttribute, NftCategory, Network, WalletProvider } from '@/types/api'
 import { hashStringToSeed, mulberry32, pick, range } from './prng'
 
 const CATEGORIES: NftCategory[] = [
@@ -31,6 +31,12 @@ export const NETWORK_LABELS: Record<Network, string> = {
   ethereum: 'Ethereum',
   polygon: 'Polygon',
   solana: 'Solana',
+}
+
+export const PROVIDER_LABELS: Record<WalletProvider, string> = {
+  metamask: 'MetaMask',
+  walletconnect: 'WalletConnect',
+  coinbase: 'Coinbase Wallet',
 }
 
 const COLLECTIONS = [

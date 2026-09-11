@@ -8,7 +8,7 @@ import { getOrCreateCart, ownerKeyForUser } from './cart-shared'
 import { computeQuote } from './quote-shared'
 import { emitNftUpdated, emitOrderUpdated } from '../socket'
 
-function toApiOrder(order: DbOrder, nftsById: Map<string, { name: string; seed: number; palette: [string, string] }>): Order {
+function toApiOrder(order: DbOrder, nftsById: Map<string, { name: string; seed: number; palette: [string, string]; tokenId: string }>): Order {
   return {
     id: order.id,
     status: order.status,
@@ -29,7 +29,7 @@ function toApiOrder(order: DbOrder, nftsById: Map<string, { name: string; seed: 
         name: meta?.name ?? 'NFT',
         imageSeed: meta?.seed ?? 0,
         palette: meta?.palette ?? ['#D28A4C', '#241612'],
-        tokenId: item.nftId,
+        tokenId: meta?.tokenId ?? item.nftId,
         quantity: item.quantity,
         unitPriceEth: item.unitPriceEth,
         subtotalEth: (Number(item.unitPriceEth) * item.quantity).toFixed(4),
@@ -104,7 +104,7 @@ export const orderHandlers = [
       const sameRequest = existing.walletId === payload.walletId && existing.network === payload.network
       if (!sameRequest) return errors.idempotencyMismatch()
       await resolveOrderIfDue(existing)
-      const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette }]))
+      const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId }]))
       return HttpResponse.json(toApiOrder(existing, nftsById), { status: 200 })
     }
 
@@ -172,7 +172,7 @@ export const orderHandlers = [
     await applyNetworkDelay()
     if (isScenario('order-timeout')) await sleep(5200)
 
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette }]))
+    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId }]))
     return HttpResponse.json(toApiOrder(order, nftsById), { status: 201 })
   }),
 
@@ -186,7 +186,7 @@ export const orderHandlers = [
     if (!order) return errors.notFound('Pedido não encontrado.')
     await resolveOrderIfDue(order)
 
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette }]))
+    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId }]))
     return HttpResponse.json(toApiOrder(order, nftsById))
   }),
 
@@ -198,7 +198,7 @@ export const orderHandlers = [
     const db = await getDb()
     const orders = db.orders.filter((o) => o.userId === context.user.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     for (const o of orders) await resolveOrderIfDue(o)
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette }]))
+    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId }]))
     return HttpResponse.json({ items: orders.map((o) => toApiOrder(o, nftsById)) })
   }),
 ]

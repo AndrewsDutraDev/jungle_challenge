@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/lib/use-media-query'
 import { cn } from '@/lib/utils'
 
 interface AuthCardProps {
@@ -22,9 +23,66 @@ const COPY = {
  */
 export function AuthCard({ mode, redirect, children }: AuthCardProps) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
+
+  /*
+    No mobile (Figma 16:1022 e 16:1228) não é um modal sobre o catálogo: é uma
+    tela inteira com a marca no topo, título próprio e a troca entre entrar e
+    criar conta num link no rodapé, no lugar das abas.
+  */
+  if (isMobile) {
+    return (
+      <div className="flex min-h-[calc(100vh-68px)] flex-col gap-10 px-7 pb-6 pt-20">
+        <p className="text-center text-[32px] font-bold tracking-[3.2px] text-foreground">KURIO</p>
+
+        <h1 className="text-center text-[20px] font-bold leading-4 text-foreground">
+          {mode === 'login' ? 'Entrar' : 'Criar perfil de colecionador'}
+        </h1>
+
+        {children}
+
+        <SocialBlock />
+
+        <p className="rounded-md border border-border-soft bg-surface-card p-3 text-tiny text-text-secondary">
+          Credenciais de teste: <strong className="text-text-primary">ana@kurio.test</strong> ou{' '}
+          <strong className="text-text-primary">marcos@kurio.test</strong> · senha <strong className="text-text-primary">kurio123</strong>
+        </p>
+
+        <p className="text-center text-[15px] text-text-secondary">
+          {mode === 'login' ? (
+            <>
+              Novo na Kurio?{' '}
+              <Link to="/signup" search={{ redirect }} className="text-text-accent hover:underline">
+                Crie uma conta
+              </Link>
+            </>
+          ) : (
+            <>
+              Já tem uma conta?{' '}
+              <Link to="/login" search={{ redirect }} className="text-text-accent hover:underline">
+                Entre
+              </Link>
+            </>
+          )}
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && navigate({ to: '/' })}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (open) return
+        /*
+          Fechar leva de volta ao catálogo, mas só quando o fechamento parte do
+          usuário (X, Esc, clique fora). Depois de um login bem-sucedido a rota
+          já mudou, e navegar aqui cancelaria a navegação em curso.
+        */
+        const path = window.location.pathname
+        if (path === '/login' || path === '/signup') navigate({ to: '/' })
+      }}
+    >
       <DialogContent className="max-w-md" aria-describedby="auth-subtitle">
         <DialogTitle className="sr-only">{mode === 'login' ? 'Entrar' : 'Criar conta'}</DialogTitle>
 
@@ -58,19 +116,7 @@ export function AuthCard({ mode, redirect, children }: AuthCardProps) {
 
         {children}
 
-        <div className="flex items-center gap-3 text-caption text-text-secondary">
-          <span className="h-px flex-1 bg-border" />
-          Ou continue com
-          <span className="h-px flex-1 bg-border" />
-        </div>
-        <div className="grid gap-2">
-          <Button variant="secondary" disabled title="Fora do escopo desta entrega (dados simulados)">
-            <GoogleMark /> Continuar com Google
-          </Button>
-          <Button variant="secondary" disabled title="Fora do escopo desta entrega (dados simulados)">
-            <FacebookMark /> Continuar com Facebook
-          </Button>
-        </div>
+        <SocialBlock />
 
         <p className="rounded-md border border-border-soft bg-surface-card p-3 text-tiny text-text-secondary">
           Credenciais de teste: <strong className="text-text-primary">ana@kurio.test</strong> ou{' '}
@@ -78,6 +124,36 @@ export function AuthCard({ mode, redirect, children }: AuthCardProps) {
         </p>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function SocialBlock() {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2.5 text-caption text-foreground">
+        <span className="h-px flex-1 bg-border" />
+        Ou continue com
+        <span className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4">
+        <Button
+          variant="outline"
+          className="h-10 rounded-[5px] border-border text-caption font-medium text-text-secondary"
+          disabled
+          title="Fora do escopo desta entrega (dados simulados)"
+        >
+          <GoogleMark /> Continuar com Google
+        </Button>
+        <Button
+          variant="outline"
+          className="h-10 rounded-[5px] border-border text-caption font-medium text-text-secondary"
+          disabled
+          title="Fora do escopo desta entrega (dados simulados)"
+        >
+          <FacebookMark /> Continuar com Facebook
+        </Button>
+      </div>
+    </div>
   )
 }
 

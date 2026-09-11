@@ -39,12 +39,13 @@ export function LoginPage() {
     <AuthCard mode="login" redirect={redirect}>
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
-          <Label htmlFor="login-email">E-mail</Label>
+          <Label htmlFor="login-email" className="sr-only md:not-sr-only">E-mail</Label>
           <Input
             id="login-email"
             type="email"
             required
             autoComplete="email"
+            placeholder="contato@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={Boolean(fieldErrors.email)}
@@ -58,11 +59,12 @@ export function LoginPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="login-password">Senha</Label>
+          <Label htmlFor="login-password" className="sr-only md:not-sr-only">Senha</Label>
           <PasswordInput
             id="login-password"
             required
             autoComplete="current-password"
+            placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             aria-invalid={Boolean(fieldErrors.password)}
@@ -87,7 +89,7 @@ export function LoginPage() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={login.isPending}>
+        <Button type="submit" className="h-14 w-full rounded-[10px] text-[16px] font-bold md:h-11" disabled={login.isPending}>
           {login.isPending ? 'Entrando…' : 'Entrar'}
         </Button>
       </form>

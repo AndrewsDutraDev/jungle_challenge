@@ -7,12 +7,14 @@ test.describe('Autenticação e sessão', () => {
   test('cadastro cria conta e autentica automaticamente', async ({ page }) => {
     const unique = Date.now()
     await page.goto('/signup')
-    await page.getByRole('tab', { name: 'Criar conta' }).click()
+    // As abas existem só no modal desktop; no mobile a tela de cadastro é inteira.
+    const signupTab = page.getByRole('tab', { name: 'Criar conta' })
+    if (await signupTab.count()) await signupTab.click()
     await page.locator('#signup-username').fill(`teste${unique}`)
     await page.locator('#signup-email').fill(`teste${unique}@kurio.test`)
     await page.locator('#signup-password').fill('senha123')
     await page.locator('#signup-confirm').fill('senha123')
-    await page.getByRole('button', { name: 'Criar conta' }).click()
+    await page.getByRole('button', { name: /Criar conta|Criar perfil/ }).click()
     await expect(page).toHaveURL('/')
     await expect(page.getByLabel('Menu da conta')).toBeVisible()
   })
@@ -24,7 +26,7 @@ test.describe('Autenticação e sessão', () => {
     await page.locator('#signup-email').fill(SEED_USERS.ana.email)
     await page.locator('#signup-password').fill('senha123')
     await page.locator('#signup-confirm').fill('senha123')
-    await page.getByRole('button', { name: 'Criar conta' }).click()
+    await page.getByRole('button', { name: /Criar conta|Criar perfil/ }).click()
     await expect(page.locator('#signup-email-error')).toContainText('já cadastrado')
   })
 

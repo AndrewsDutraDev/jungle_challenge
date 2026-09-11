@@ -19,24 +19,29 @@ export function Footer() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
 
+  /*
+    No Figma (node 70491:697) o footer é um bloco alinhado ao conteúdo da
+    página, não uma faixa de borda a borda: o fundo da página aparece nas
+    laterais. Por isso o container fica por fora e cada faixa pinta o próprio
+    fundo dentro dele.
+  */
   return (
-    <footer className="border-t border-border bg-surface-card">
-      <div className="container grid gap-8 py-12 md:grid-cols-4">
+    <footer className="container pb-10 pt-16">
+      {/* Medalhão acima do título e divisórias laranja entre as colunas. */}
+      <div className="grid gap-8 border-t border-primary bg-surface-card p-8 md:grid-cols-[repeat(3,1fr)_357px] md:divide-x md:divide-primary">
         {STEPS.map((step) => (
-          <div key={step.letter} className="flex gap-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-body-lg font-bold text-primary-foreground">
+          <div key={step.letter} className="flex flex-col gap-3 px-4">
+            <span className="flex size-[74px] items-center justify-center rounded-full bg-primary text-heading font-bold text-primary-foreground">
               {step.letter}
             </span>
-            <div>
-              <h3 className="text-[17px] font-bold text-text-primary">{step.title}</h3>
-              <p className="mt-1 text-body text-text-secondary">{step.copy}</p>
-            </div>
+            <h3 className="text-[17px] font-bold leading-4 text-foreground">{step.title}</h3>
+            <p className="max-w-[204px] text-body leading-[22px] text-text-secondary">{step.copy}</p>
           </div>
         ))}
-        <div>
-          <h3 className="text-body-lg font-bold text-text-primary">Antecipe-se ao próximo lançamento</h3>
+        <div className="flex flex-col gap-3 px-4">
+          <h3 className="text-body-lg font-bold leading-4 text-foreground">Antecipe-se ao próximo lançamento</h3>
           <form
-            className="mt-3 flex gap-2"
+            className="flex h-10 items-center overflow-hidden rounded-md bg-surface-dark shadow-card"
             onSubmit={(e) => {
               e.preventDefault()
               setSent(true)
@@ -52,30 +57,37 @@ export function Footer() {
               placeholder="digite seu e-mail…"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10"
+              className="h-full flex-1 rounded-none border-0 bg-transparent text-body placeholder:text-secondary focus-visible:ring-0"
             />
-            <Button type="submit" size="sm" className="shrink-0 text-[18px] font-bold">
+            <Button type="submit" className="h-full w-[85px] shrink-0 rounded-none text-[18px] font-bold">
               Enviar
             </Button>
           </form>
-          <p role="status" className="mt-2 text-caption text-success">
+          <p className="text-caption leading-[22px] text-text-secondary">
+            Receba lançamentos selecionados, histórias de criadores e novidades do mercado.
+          </p>
+          <p role="status" className="text-caption text-success">
             {sent ? 'Inscrição registrada nesta simulação.' : ''}
           </p>
         </div>
       </div>
 
-      <Separator />
-
-      <div className="container flex flex-col gap-6 py-6 text-caption text-text-secondary sm:flex-row sm:items-center sm:justify-between">
-        <span className="font-bold text-text-primary">KURIO</span>
-        <span>Feito para colecionadores, criadores e cultura.</span>
-        <span>contato@email.com</span>
-        <span>+55 11 4002 8922</span>
+      <div className="bg-surface-dark">
+        <div className="flex flex-col gap-4 p-8 text-body text-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span className="flex-1 font-bold tracking-[1.4px]">KURIO</span>
+          <span className="flex-1 leading-[22px]">
+            Feito para colecionadores,
+            <br />
+            criadores e cultura
+          </span>
+          <a href="mailto:contato@email.com" className="flex-1 leading-[22px] hover:text-text-accent">
+            contato@email.com
+          </a>
+          <span className="w-[228px] leading-[22px]">+55 11 4002 8922</span>
+        </div>
       </div>
 
-      <Separator />
-
-      <div className="container grid gap-8 py-10 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-8 bg-surface-card p-8 sm:grid-cols-2 md:grid-cols-4">
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.title}>
             <h4 className="mb-3 text-body-lg font-bold text-text-primary">{col.title}</h4>
@@ -114,13 +126,10 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-border py-6 text-center text-tiny text-text-secondary/70">
+      <p className="pt-6 text-center text-body leading-[30px] text-foreground">
         © {new Date().getFullYear()} Kurio. Propriedade digital para todos. Projeto de desafio técnico — dados simulados.
-      </div>
+      </p>
     </footer>
   )
 }
 
-function Separator() {
-  return <div className="border-t border-border" />
-}
