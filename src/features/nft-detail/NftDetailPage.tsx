@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Heart, Linkedin, Mail, Minus, Plus, Star, Twitter, ZoomIn } from 'lucide-react'
+import { ArrowLeft, Heart, Linkedin, Mail, Minus, Plus, ShoppingBag, Star, Twitter, ZoomIn } from 'lucide-react'
 import { Route } from '@/routes/nft.$nftId'
 import { useNftQuery, useRelatedNftsQuery } from '@/lib/api/nfts'
 import { useSessionQuery } from '@/lib/api/auth'
@@ -15,6 +15,7 @@ import { NotFound } from '@/components/layout/NotFound'
 import { formatEth } from '@/lib/format'
 import { CATEGORY_LABELS, NETWORK_LABELS } from '@/mocks/fixtures'
 import { KurioApiError } from '@/lib/api/client'
+import { useIsMobile } from '@/lib/use-media-query'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -36,6 +37,7 @@ export function NftDetailPage() {
   const addToCart = useAddToCartMutation()
   const [quantity, setQuantity] = useState(1)
   const [activeView, setActiveView] = useState(0)
+  const isMobile = useIsMobile()
 
   if (error instanceof KurioApiError && error.status === 404) {
     return <NotFound message="Este NFT não existe ou foi removido." />
@@ -116,13 +118,44 @@ export function NftDetailPage() {
             ))}
           </div>
 
-          <div className="relative flex min-w-0 flex-1 items-center justify-center rounded-md bg-surface-card p-4">
+          <div className="relative flex min-w-0 flex-1 items-center justify-center rounded-md bg-surface-card p-4 max-lg:bg-gradient-to-br max-lg:from-surface-card max-lg:to-surface-raised">
+            {/* No mobile o Figma põe voltar e favoritar flutuando sobre a arte. */}
+            <div className="absolute inset-x-4 top-4 z-10 flex items-center justify-between lg:hidden">
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                aria-label="Voltar"
+                className="flex size-[35px] items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <ArrowLeft className="size-5" />
+              </button>
+              {session ? (
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite.mutate({ nftId: nft.id, isFavorite })}
+                  aria-pressed={isFavorite}
+                  className="flex size-[35px] items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="sr-only">Favoritar</span>
+                  <Heart className={cn('size-4', isFavorite && 'fill-primary text-primary')} />
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  search={{ redirect: `/nft/${nft.id}` }}
+                  className="flex size-[35px] items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="sr-only">Favoritar</span>
+                  <Heart className="size-4" />
+                </Link>
+              )}
+            </div>
             <div className="aspect-square w-full overflow-hidden rounded-3xl">
               <NftArt seed={nft.seed + VIEW_OFFSETS[activeView]} palette={nft.palette} title={nft.name} />
             </div>
             <span
               aria-hidden
-              className="absolute right-4 top-4 flex size-[30px] items-center justify-center rounded-full bg-ink/60 text-text-primary"
+              className="absolute right-4 top-4 hidden size-[30px] items-center justify-center rounded-full bg-ink/60 text-text-primary lg:flex"
             >
               <ZoomIn className="size-4" />
             </span>
@@ -171,60 +204,62 @@ export function NftDetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {!soldOut && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
-                  disabled={quantity <= 1}
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  aria-label="Diminuir quantidade"
-                >
-                  <Minus className="size-4" />
-                </button>
-                <span className="min-w-6 text-center text-[20px] leading-7 text-foreground" aria-live="polite">
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
-                  disabled={quantity >= maxQuantity}
-                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-                  aria-label="Aumentar quantidade"
-                >
-                  <Plus className="size-4" />
-                </button>
-              </div>
-            )}
-
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <Button
-                className="h-10 flex-1 text-[14px] font-bold sm:w-[130px] sm:flex-none"
-                disabled={soldOut || addToCart.isPending}
-                onClick={() => handleAddToCart(true)}
-              >
-                {soldOut ? 'Esgotado' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
-              </Button>
-
-              {session ? (
-                <Button
-                  variant="outline"
-                  className="h-10 flex-1 border-primary text-[14px] font-medium text-text-accent sm:w-[130px] sm:flex-none"
-                  onClick={() => toggleFavorite.mutate({ nftId: nft.id, isFavorite })}
-                  aria-pressed={isFavorite}
-                >
-                  <Heart className={isFavorite ? 'fill-primary text-primary' : ''} /> Favoritar
-                </Button>
-              ) : (
-                <Button variant="outline" className="h-10 flex-1 border-primary text-[14px] font-medium text-text-accent sm:w-[130px] sm:flex-none" asChild>
-                  <Link to="/login" search={{ redirect: `/nft/${nft.id}` }}>
-                    <Heart /> Favoritar
-                  </Link>
-                </Button>
+          {!isMobile && (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {!soldOut && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    aria-label="Diminuir quantidade"
+                  >
+                    <Minus className="size-4" />
+                  </button>
+                  <span className="min-w-6 text-center text-[20px] leading-7 text-foreground" aria-live="polite">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    className="flex h-[44px] w-[33px] items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground shadow-card disabled:opacity-40"
+                    disabled={quantity >= maxQuantity}
+                    onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                    aria-label="Aumentar quantidade"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                </div>
               )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  className="h-10 w-[130px] text-[14px] font-bold"
+                  disabled={soldOut || addToCart.isPending}
+                  onClick={() => handleAddToCart(true)}
+                >
+                  {soldOut ? 'Esgotado' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
+                </Button>
+
+                {session ? (
+                  <Button
+                    variant="outline"
+                    className="h-10 w-[130px] border-primary text-[14px] font-medium text-text-accent"
+                    onClick={() => toggleFavorite.mutate({ nftId: nft.id, isFavorite })}
+                    aria-pressed={isFavorite}
+                  >
+                    <Heart className={isFavorite ? 'fill-primary text-primary' : ''} /> Favoritar
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="h-10 w-[130px] border-primary text-[14px] font-medium text-text-accent" asChild>
+                    <Link to="/login" search={{ redirect: `/nft/${nft.id}` }}>
+                      <Heart /> Favoritar
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <dl className="space-y-3 text-[15px] text-secondary">
@@ -302,6 +337,63 @@ export function NftDetailPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {isMobile && (
+        <>
+          {/* Espaço para a barra de compra não cobrir o fim do conteúdo. */}
+          <div aria-hidden className="h-[164px]" />
+          <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[40px] bg-surface-card px-6 pb-9 pt-5 shadow-popover">
+            <div className="flex items-center justify-between">
+              {!soldOut ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-[15px] font-medium leading-4 text-text-secondary">Qtd.</span>
+                  <button
+                    type="button"
+                    className="flex h-[30px] w-5 items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground disabled:opacity-40"
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    aria-label="Diminuir quantidade"
+                  >
+                    <Minus className="size-4" />
+                  </button>
+                  <span className="min-w-5 text-center text-[18px] font-medium leading-[25px] text-foreground" aria-live="polite">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    className="flex h-[30px] w-5 items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground disabled:opacity-40"
+                    disabled={quantity >= maxQuantity}
+                    onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                    aria-label="Aumentar quantidade"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-[15px] font-medium text-text-secondary">Edição esgotada</span>
+              )}
+              <span className="text-[20px] font-bold leading-4 text-text-accent">{formatEth(nft.priceEth)}</span>
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
+              <Button
+                className="h-[60px] flex-1 rounded-[40px] bg-gradient-to-r from-primary to-primary/80 text-[16px] font-bold"
+                disabled={soldOut || addToCart.isPending}
+                onClick={() => handleAddToCart(true)}
+              >
+                {soldOut ? 'Esgotado' : addToCart.isPending ? 'Adicionando…' : 'Comprar NFT'}
+              </Button>
+              <Link
+                to="/cart"
+                aria-label="Ir para o carrinho"
+                className="flex size-[60px] shrink-0 items-center justify-center rounded-[40px] border border-border bg-surface-raised text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <ShoppingBag className="size-5" />
+              </Link>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

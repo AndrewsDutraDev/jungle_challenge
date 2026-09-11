@@ -18,7 +18,7 @@ test.describe('Tempo real — preço/disponibilidade mudam durante a navegação
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')
     await page.locator('a[href^="/nft/"]').first().click()
-    await page.getByRole('button', { name: /COMPRAR/ }).click()
+    await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await expect(page).toHaveURL(/\/cart/)
 
     // O driver de price-drift muda o preço/disponibilidade de um NFT no

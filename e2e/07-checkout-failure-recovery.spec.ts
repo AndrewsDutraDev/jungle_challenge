@@ -10,7 +10,7 @@ test.describe('Checkout — falhas e recuperação', () => {
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')
     await page.locator('a[href^="/nft/"]').first().click()
-    await page.getByRole('button', { name: /COMPRAR/ }).click()
+    await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
     await expect(page).toHaveURL(/\/checkout/)
     await connectWallet(page)

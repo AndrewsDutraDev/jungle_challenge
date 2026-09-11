@@ -83,7 +83,8 @@ export function Header() {
             <Button variant="ghost" size="icon" aria-label="Buscar" onClick={() => setSearchOpen((v) => !v)}>
               <Search />
             </Button>
-            <Button variant="ghost" size="icon" aria-label={`Carrinho, ${cartCount} itens`} asChild className="relative">
+            {/* No mobile o carrinho vive na barra inferior (MobileTabBar). */}
+            <Button variant="ghost" size="icon" aria-label={`Carrinho, ${cartCount} itens`} asChild className="relative max-md:hidden">
               <Link to="/cart">
                 <ShoppingCart />
                 {cartCount > 0 && (

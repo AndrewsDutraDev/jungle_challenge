@@ -23,6 +23,12 @@ test.describe('Catálogo — busca, filtros, ordenação e paginação', () => {
     await page.goto('/?page=2')
     await expect(page).toHaveURL(/page=2/)
 
+    // No mobile os filtros vivem num drawer (o layout do Figma troca a coluna
+    // lateral por uma busca com botão de filtros); no desktop ficam na sidebar.
+    await page.locator('a[href^="/nft/"]').first().waitFor()
+    const filtersTrigger = page.getByRole('button', { name: /^Filtros/ })
+    if (await filtersTrigger.count()) await filtersTrigger.click()
+
     const firstCategory = page.locator('fieldset', { hasText: 'Coleções' }).locator('input[type="checkbox"], button[role="checkbox"]').first()
     await firstCategory.click()
     await expect(page).toHaveURL(/category=/)

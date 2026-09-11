@@ -10,7 +10,7 @@ test.describe('Detalhe do NFT — acesso direto', () => {
     // Navegação "a frio": abre a URL direto, sem passar pelo catálogo.
     await page.goto(href!)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.getByRole('button', { name: /COMPRAR|Esgotado/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /COMPRAR|Comprar NFT|Esgotado/ })).toBeVisible()
   })
 
   test('NFT inexistente mostra estado 404 dedicado', async ({ page }) => {

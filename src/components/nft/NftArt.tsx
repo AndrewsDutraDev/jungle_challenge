@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useId, useMemo } from 'react'
 import { mulberry32 } from '@/mocks/prng'
 import { cn } from '@/lib/utils'
 
@@ -32,7 +32,13 @@ export function NftArt({ seed, palette, className, title }: NftArtProps) {
     })
   }, [seed])
 
-  const gradientId = `nft-grad-${seed}`
+  /*
+    O id precisa ser único por instância, não por seed: o mesmo NFT aparece em
+    mais de um lugar (banner de destaque e card do catálogo) e ids repetidos
+    fazem o navegador resolver `url(#id)` para o primeiro do documento — que
+    pode estar dentro de uma subárvore oculta, deixando a arte sem pintura.
+  */
+  const gradientId = `nft-grad-${useId().replace(/:/g, '')}`
 
   return (
     <svg viewBox="0 0 100 100" role="img" aria-label={title ?? 'Arte do NFT'} className={cn('h-full w-full', className)}>

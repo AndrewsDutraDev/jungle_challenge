@@ -31,8 +31,9 @@ export function ScenarioPanel() {
     setActive(id)
   }
 
+  // No mobile as barras fixas (tab bar e barra de compra) ocupam o rodapé.
   return (
-    <div className="fixed bottom-4 right-4 z-[60]" data-testid="scenario-panel">
+    <div className="fixed right-4 top-20 z-[60] md:bottom-4 md:top-auto" data-testid="scenario-panel">
       {open ? (
         <div className="w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-surface-dark p-4 shadow-popover">
           <div className="mb-3 flex items-center justify-between">

@@ -2,6 +2,7 @@ import { Route } from '@/routes/index'
 import { useNftListQuery } from '@/lib/api/nfts'
 import { Hero } from './Hero'
 import { CatalogFilters } from './CatalogFilters'
+import { MobileSearchAndFilters } from './MobileSearchAndFilters'
 import { FeaturedNftBanner } from './FeaturedNftBanner'
 import { SortBar } from './SortBar'
 import { ProductCard } from './ProductCard'
@@ -10,12 +11,14 @@ import { PromoCards } from './PromoCards'
 import { BlogSection } from './BlogSection'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/lib/use-media-query'
 import type { CatalogSearch } from '@/routes/index'
 import type { SortOption } from '@/types/api'
 
 export function CatalogPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+  const isMobile = useIsMobile()
 
   const params = {
     q: search.q,
@@ -43,10 +46,24 @@ export function CatalogPage() {
     <div>
       <Hero />
       <div className="container flex flex-col gap-8 py-10 lg:flex-row lg:items-start">
-        <aside className="flex w-full flex-col gap-6 lg:w-[310px] lg:shrink-0">
-          <CatalogFilters search={search} onChange={updateSearch} />
-          <FeaturedNftBanner nft={data?.items[0]} />
-        </aside>
+        {/*
+          No mobile o Figma troca a coluna de filtros por uma busca com o botão
+          que abre os filtros num drawer — empilhados, eles empurravam o
+          catálogo para fora da primeira tela inteira.
+        */}
+        <MobileSearchAndFilters search={search} onChange={updateSearch} />
+
+        {/*
+          Renderizado de fato só no desktop: escondido por CSS, o banner de
+          destaque continuaria no DOM como o primeiro link de NFT da página —
+          invisível, mas ainda o primeiro para quem navega por seletor.
+        */}
+        {!isMobile && (
+          <aside className="flex w-full flex-col gap-6 lg:w-[310px] lg:shrink-0">
+            <CatalogFilters search={search} onChange={updateSearch} />
+            <FeaturedNftBanner nft={data?.items[0]} />
+          </aside>
+        )}
 
         <div className="min-w-0 flex-1">
           <SortBar

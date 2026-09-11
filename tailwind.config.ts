@@ -25,6 +25,7 @@ export default {
         ink: '#140D0A',
         'surface-dark': '#38220F',
         'surface-card': '#241612',
+        'surface-raised': '#2F1D15',
         'surface-elevated': '#FBFBFB',
         border: {
           DEFAULT: '#3F2319',

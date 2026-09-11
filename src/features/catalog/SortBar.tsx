@@ -27,15 +27,15 @@ export function SortBar({ total, sort, rawSort, hasCategoryFilter, onSortChange,
   return (
     <div className="mb-5 flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabValue)}>
+        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabValue)} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <TabsList className="gap-5 border-b-0">
-            <TabsTrigger value="all" className="text-[15px]">
+            <TabsTrigger value="all" className="whitespace-nowrap text-[15px]">
               Todos os NFTs
             </TabsTrigger>
-            <TabsTrigger value="recent" className="text-[15px]">
+            <TabsTrigger value="recent" className="whitespace-nowrap text-[15px]">
               Novos lançamentos
             </TabsTrigger>
-            <TabsTrigger value="trending" className="text-[15px]">
+            <TabsTrigger value="trending" className="whitespace-nowrap text-[15px]">
               Em alta
             </TabsTrigger>
           </TabsList>

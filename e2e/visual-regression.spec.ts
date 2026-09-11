@@ -37,7 +37,7 @@ test.describe('Regressão visual', () => {
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')
     await page.locator('a[href^="/nft/"]').first().click()
-    await page.getByRole('button', { name: /COMPRAR/ }).click()
+    await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await expect(page).toHaveURL(/\/cart/)
     await expect(page.getByText('Subtotal')).toBeVisible()
     await expect(page).toHaveScreenshot('carrinho.png', {
@@ -51,7 +51,7 @@ test.describe('Regressão visual', () => {
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')
     await page.locator('a[href^="/nft/"]').first().click()
-    await page.getByRole('button', { name: /COMPRAR/ }).click()
+    await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
     await expect(page).toHaveURL(/\/checkout/)
     await expect(page.getByText('Perfil do colecionador')).toBeVisible()

@@ -2,6 +2,7 @@ import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/re
 import type { RouterContext } from '@/app/router-context'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { ScenarioPanel } from '@/components/dev/ScenarioPanel'
 import { NotFound } from '@/components/layout/NotFound'
 import { RouteErrorBoundary } from '@/components/layout/RouteErrorBoundary'
@@ -37,6 +38,9 @@ function RootComponent() {
         <Outlet />
       </main>
       <Footer />
+      {/* Espaço para a barra fixa do mobile não cobrir o fim da página. */}
+      <div aria-hidden className="h-[68px] md:hidden" />
+      <MobileTabBar />
       {MOCKS_ENABLED && <ScenarioPanel />}
     </div>
   )
