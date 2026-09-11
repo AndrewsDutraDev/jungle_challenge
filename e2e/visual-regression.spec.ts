@@ -13,6 +13,8 @@ import { SEED_USERS, loginAs } from './support/auth'
  */
 test.describe('Regressão visual', () => {
   test('início', async ({ page }) => {
+    // Sem troca automática do slider do hero: a captura é sempre do 1º destaque.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
     await page.waitForSelector('a[href^="/nft/"]')
     await expect(page).toHaveScreenshot('inicio.png', {

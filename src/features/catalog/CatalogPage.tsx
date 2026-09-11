@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Route } from '@/routes/index'
 import { useNftListQuery } from '@/lib/api/nfts'
@@ -38,8 +39,24 @@ export function CatalogPage() {
   // visíveis e a atualização é sinalizada por cima, sem deslocar o layout.
   const updating = isFetching && !isLoading && !isError
 
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // Filtros, abas, ordenação e busca só mudam a URL da mesma página: a
+  // navegação não pode devolver o scroll ao topo (o padrão do router).
   function updateSearch(patch: Partial<CatalogSearch>) {
-    navigate({ search: (prev) => ({ ...prev, ...patch }) })
+    navigate({ search: (prev) => ({ ...prev, ...patch }), resetScroll: false })
+  }
+
+  // Trocar de página leva ao começo da lista de resultados — não ao topo da
+  // página —, e só quando ele ficou acima da tela (quem clicou na paginação
+  // lá embaixo).
+  function goToPage(page: number) {
+    updateSearch({ page })
+    const results = resultsRef.current
+    if (results && results.getBoundingClientRect().top < 0) {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      results.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' })
+    }
   }
 
   function updateTab(tab: 'all' | 'recent' | 'trending') {
@@ -70,7 +87,7 @@ export function CatalogPage() {
           </aside>
         )}
 
-        <div className="min-w-0 flex-1">
+        <div ref={resultsRef} className="min-w-0 flex-1 scroll-mt-24">
           <SortBar
             total={data?.total ?? 0}
             sort={params.sort}
@@ -109,7 +126,7 @@ export function CatalogPage() {
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={() => navigate({ search: { page: 1 } })}
+                onClick={() => navigate({ search: { page: 1 }, resetScroll: false })}
               >
                 Limpar filtros
               </Button>
@@ -138,7 +155,7 @@ export function CatalogPage() {
                   ))}
                 </div>
               </div>
-              <Pagination page={data.page} totalPages={data.totalPages} onPageChange={(page) => updateSearch({ page })} />
+              <Pagination page={data.page} totalPages={data.totalPages} onPageChange={goToPage} />
             </>
           )}
         </div>

@@ -482,6 +482,17 @@ aplicação e MSW em paralelo foi testado e piorou o LCP mobile — ver
   deslocar o layout.
 - **Favoritos** têm página própria (`/favorites`), acessível pela aba do
   mobile, pelo menu da conta e pela navegação da área do colecionador.
+- **Filtros sem pular para o topo**: filtros, abas, ordenação e busca do
+  catálogo mudam a URL com `resetScroll: false`, então a página fica onde o
+  colecionador estava. Trocar de página leva ao início da lista de
+  resultados (não ao topo), só quando ela ficou acima da tela.
+- **Slider do hero**: três destaques com as artes do Figma. As bullets (e as
+  setas do teclado, e o arrasto no mobile) trocam o destaque; sozinho, ele
+  avança a cada 6s. A troca automática pausa com o mouse ou o foco no hero,
+  para de vez quando o colecionador escolhe um destaque e não acontece com
+  `prefers-reduced-motion` — o mecanismo de pausa que conteúdo em movimento
+  precisa oferecer. Só a imagem do 1º destaque entra no carregamento (é a
+  candidata a LCP); a do próximo é montada depois do `load`.
 - **Validação do pagamento**: ao confirmar, cada campo inválido mostra a
   mensagem logo abaixo e o foco vai para o primeiro deles; erros de campo
   devolvidos pela API aparecem do mesmo jeito.
