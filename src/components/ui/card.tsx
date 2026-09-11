@@ -16,13 +16,13 @@ CardHeader.displayName = 'CardHeader'
 export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
     // eslint-disable-next-line jsx-a11y/heading-has-content -- content comes from `props.children`
-    <h3 ref={ref} className={cn('text-body-lg font-bold text-text-primary', className)} {...props} />
+    <h3 ref={ref} className={cn('text-[16px] font-bold text-text-primary', className)} {...props} />
   ),
 )
 CardTitle.displayName = 'CardTitle'
 
 export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => <p ref={ref} className={cn('text-caption text-text-secondary', className)} {...props} />,
+  ({ className, ...props }, ref) => <p ref={ref} className={cn('text-[16px] text-text-secondary', className)} {...props} />,
 )
 CardDescription.displayName = 'CardDescription'
 

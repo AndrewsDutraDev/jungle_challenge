@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import type { CatalogSearch } from '@/routes/index'
 import type { SortOption } from '@/types/api'
 
@@ -11,6 +11,12 @@ const SORT_LABELS: Record<SortOption, string> = {
 }
 
 type TabValue = 'all' | 'recent' | 'trending'
+
+const TABS: { value: TabValue; label: string }[] = [
+  { value: 'all', label: 'Todos os NFTs' },
+  { value: 'recent', label: 'Novos lançamentos' },
+  { value: 'trending', label: 'Em alta' },
+]
 
 interface SortBarProps {
   total: number
@@ -27,19 +33,36 @@ export function SortBar({ total, sort, rawSort, hasCategoryFilter, onSortChange,
   return (
     <div className="mb-5 flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabValue)} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <TabsList className="gap-5 border-b-0">
-            <TabsTrigger value="all" className="whitespace-nowrap text-[15px]">
-              Todos os NFTs
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="whitespace-nowrap text-[15px]">
-              Novos lançamentos
-            </TabsTrigger>
-            <TabsTrigger value="trending" className="whitespace-nowrap text-[15px]">
-              Em alta
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/*
+          Visualmente são abas, mas não controlam painéis: todas filtram a
+          mesma grade. Com Radix Tabs sem `TabsContent`, cada gatilho apontava
+          `aria-controls` para um painel inexistente (reprovado no Lighthouse).
+          Botões de alternância com `aria-pressed` descrevem isso corretamente.
+        */}
+        <div
+          role="group"
+          aria-label="Filtrar vitrine"
+          className="-mx-4 flex items-center gap-5 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+        >
+          {TABS.map((tab) => {
+            const active = tab.value === activeTab
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => !active && onTabChange(tab.value)}
+                className={cn(
+                  'whitespace-nowrap border-b-2 border-transparent py-3 text-[15px] font-medium text-foreground transition-colors',
+                  'hover:text-text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                  active && 'border-primary font-bold text-text-accent',
+                )}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
 
         <div className="flex items-center gap-2">
           <label htmlFor="sort-select" className="text-[15px] text-foreground">

@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 export function OrderTotals({ quote, isLoading }: { quote: Quote | undefined; isLoading: boolean }) {
   if (isLoading || !quote) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="totals-skeleton">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />

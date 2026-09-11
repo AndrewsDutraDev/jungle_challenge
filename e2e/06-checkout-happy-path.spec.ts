@@ -1,6 +1,27 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { SEED_USERS, loginAs } from './support/auth'
 import { connectWallet } from './support/wallet'
+
+/**
+ * No cenário `default` preços e taxas mudam em tempo real. Se uma mudança cai
+ * entre a cotação e o clique, o servidor recusa a cotação antiga (409) e a
+ * página pede nova confirmação — comportamento correto, coberto no fluxo 9.
+ * Aqui o caminho feliz só confirma de novo, em vez de falhar por timing.
+ */
+async function confirmPurchase(page: Page) {
+  const staleQuote = page.getByRole('alert').filter({ hasText: 'mudaram desde a última cotação' })
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.getByRole('button', { name: 'Confirmar compra' }).click()
+    // Olha só o desfecho: o aviso some e reaparece rápido demais para ser
+    // observado com segurança entre uma tentativa e outra.
+    const reachedOrder = await page.waitForURL(/\/pedido\//, { timeout: 10_000 }).then(
+      () => true,
+      () => false,
+    )
+    if (reachedOrder || !(await staleQuote.isVisible())) break
+  }
+  await expect(page).toHaveURL(/\/pedido\//)
+}
 
 /** README §9, fluxo 6: compra completa, do catálogo ao recibo confirmado. */
 test.describe('Checkout — compra completa', () => {
@@ -21,8 +42,7 @@ test.describe('Checkout — compra completa', () => {
     // Ana já tem uma carteira principal seedada — só falta conectar.
     await connectWallet(page)
 
-    await page.getByRole('button', { name: 'Confirmar compra' }).click()
-    await expect(page).toHaveURL(/\/pedido\//)
+    await confirmPurchase(page)
 
     // No cenário "default" o desfecho tem ~12% de chance de recusa mesmo com
     // tudo correto (simula uma rede de pagamento real) — o README pede o
@@ -37,8 +57,7 @@ test.describe('Checkout — compra completa', () => {
       await page.getByRole('link', { name: 'Tentar novamente' }).click()
       await expect(page).toHaveURL(/\/checkout/)
       await connectWallet(page)
-      await page.getByRole('button', { name: 'Confirmar compra' }).click()
-      await expect(page).toHaveURL(/\/pedido\//)
+      await confirmPurchase(page)
     }
 
     await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toBeVisible()

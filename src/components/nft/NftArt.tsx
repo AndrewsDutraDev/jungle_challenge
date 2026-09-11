@@ -11,9 +11,11 @@ interface NftArtProps {
   src?: string
   /** Largura de exibição, usada para o browser escolher entre 250w e 500w. */
   sizes?: string
+  /** Para a arte acima da dobra (candidata a LCP): carrega sem lazy e com prioridade. */
+  priority?: boolean
 }
 
-export function NftArt({ seed, palette, className, title, src, sizes = '250px' }: NftArtProps) {
+export function NftArt({ seed, palette, className, title, src, sizes = '250px', priority = false }: NftArtProps) {
   const [failed, setFailed] = useState(false)
 
   if (src && !failed) {
@@ -26,8 +28,13 @@ export function NftArt({ seed, palette, className, title, src, sizes = '250px' }
         srcSet={`${small} 250w, ${src} 500w`}
         sizes={sizes}
         alt={title ?? 'Arte do NFT'}
-        loading="lazy"
-        decoding="async"
+        /* As artes são quadradas: informar a proporção deixa o browser reservar
+           o espaço antes do download e evita deslocamento de layout. */
+        width={500}
+        height={500}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
+        decoding={priority ? 'sync' : 'async'}
         onError={() => setFailed(true)}
         className={cn('h-full w-full object-cover', className)}
       />

@@ -59,7 +59,7 @@ export const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn('text-heading font-bold text-text-primary', className)} {...props} />
+  <DialogPrimitive.Title ref={ref} className={cn('text-[16px] font-bold text-text-primary', className)} {...props} />
 ))
 DialogTitle.displayName = DialogPrimitive.Title.displayName
 
@@ -67,6 +67,6 @@ export const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn('text-caption text-text-secondary', className)} {...props} />
+  <DialogPrimitive.Description ref={ref} className={cn('text-[16px] text-text-secondary', className)} {...props} />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName

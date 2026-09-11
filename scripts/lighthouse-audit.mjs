@@ -11,7 +11,6 @@
 //   presets de perfil abaixo (`PROFILES`) são a única customização em
 //   relação aos padrões do Lighthouse.
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs'
-import { execSync } from 'node:child_process'
 import path from 'node:path'
 import * as chromeLauncher from 'chrome-launcher'
 import lighthouse from 'lighthouse'
@@ -104,7 +103,11 @@ async function main() {
           const cls = lhr.audits['cumulative-layout-shift']?.numericValue ?? null
           const tbt = lhr.audits['total-blocking-time']?.numericValue ?? null
 
-          allRuns.push({ page: page.key, pageLabel: page.label, profile: profileKey, run, categories, lcp, cls, tbt })
+          // Versão do navegador que de fato rodou a auditoria, lida do próprio
+          // resultado (`--version` não imprime nada no Chrome para Windows).
+          const browser = lhr.environment?.hostUserAgent?.match(/Chrome\/([\d.]+)/)?.[1] ?? null
+
+          allRuns.push({ page: page.key, pageLabel: page.label, profile: profileKey, run, browser, categories, lcp, cls, tbt })
           console.log(`perf=${categories.performance} a11y=${categories.accessibility} bp=${categories['best-practices']} seo=${categories.seo} LCP=${Math.round(lcp)}ms CLS=${cls?.toFixed(3)} TBT=${Math.round(tbt)}ms`)
         }
       }
@@ -134,13 +137,8 @@ async function main() {
     }
   }
 
-  let nodeVersion = process.version
-  let chromeVersion = 'desconhecida'
-  try {
-    chromeVersion = execSync(`${CHROME_PATH ?? 'chromium'} --version`).toString().trim()
-  } catch {
-    /* segue sem a versão exata do binário caso não seja possível invocá-lo diretamente */
-  }
+  const nodeVersion = process.version
+  const chromeVersion = allRuns.find((r) => r.browser)?.browser ?? 'desconhecida'
 
   const environment = {
     date: new Date().toISOString(),

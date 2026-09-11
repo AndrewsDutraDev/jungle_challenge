@@ -37,24 +37,35 @@ test.describe('Estados de carregamento — skeletons, falha e recuperação', ()
 
     await useScenario(page, 'slow-network')
     await page.reload()
-    await expect(page.getByText('Subtotal')).toBeVisible({ timeout: 6000 })
+
+    // O resumo é um dos componentes que o README §8 exige com skeleton.
+    await expect(page.locator('[data-testid="totals-skeleton"]')).toBeVisible()
+
+    // `slow-network` sorteia 1.8–3.2s por chamada e o resumo depende de duas
+    // sequenciais (carrinho e cotação) — o teto precisa acomodar o pior caso,
+    // senão o teste falha por construção quando os dois sorteios são altos.
+    await expect(page.getByText('Subtotal')).toBeVisible({ timeout: 15_000 })
   })
 
   test('falha de servidor mostra feedback de erro e nova tentativa recupera o conteúdo', async ({ page }) => {
+    test.setTimeout(120_000)
     await useScenario(page, 'server-errors') // ~40% das chamadas falham com 500/503
     await page.goto('/')
 
     // Sob esse cenário, recarregamos algumas vezes até pegar uma falha — o
     // objetivo é comprovar que a UI se recupera assim que uma tentativa tem
-    // sucesso, não medir a taxa de falha em si.
+    // sucesso, não medir a taxa de falha em si. Cada recarga espera a página
+    // chegar a um desfecho (erro ou catálogo): conferir logo após o `load`
+    // olhava antes de a consulta terminar, e recarregar em sequência com a
+    // página ainda subindo derrubava a sessão do navegador ("Not attached to
+    // an active page").
+    const catalogError = page.getByRole('alert').filter({ hasText: 'Não foi possível carregar o catálogo' })
+    const firstNft = page.locator('a[href^="/nft/"]').first()
     let sawError = false
     for (let attempt = 0; attempt < 8 && !sawError; attempt += 1) {
       await page.reload()
-      sawError = await page
-        .getByRole('alert')
-        .filter({ hasText: 'Não foi possível carregar o catálogo' })
-        .isVisible()
-        .catch(() => false)
+      await expect(catalogError.or(firstNft)).toBeVisible({ timeout: 15_000 })
+      sawError = await catalogError.isVisible()
     }
     test.skip(!sawError, 'Nenhuma das tentativas calhou de bater em erro de servidor (variação esperada do cenário).')
 

@@ -1,10 +1,10 @@
 {
   "environment": {
-    "date": "2026-09-10T15:55:22.440Z",
-    "nodeVersion": "v22.22.2",
+    "date": "2026-09-11T05:29:39.454Z",
+    "nodeVersion": "v24.18.0",
     "lighthouseVersion": "13.4.1",
-    "chromeVersion": "Chromium 141.0.7390.37",
-    "os": "linux x64",
+    "chromeVersion": "153.0.0.0",
+    "os": "win32 x64",
     "baseUrl": "http://localhost:4173",
     "runsPerCombo": 3,
     "mockScenario": "default"
@@ -15,51 +15,51 @@
       "pageLabel": "Início",
       "profile": "mobile",
       "profileLabel": "Mobile",
-      "performance": 85,
-      "accessibility": 95,
+      "performance": 88,
+      "accessibility": 100,
       "bestPractices": 100,
-      "seo": 91,
-      "lcpMs": 3415,
-      "clsScore": 0.001,
-      "tbtMs": 169
+      "seo": 92,
+      "lcpMs": 3479,
+      "clsScore": 0.002,
+      "tbtMs": 31
     },
     {
       "page": "inicio",
       "pageLabel": "Início",
       "profile": "desktop",
       "profileLabel": "Desktop",
-      "performance": 98,
-      "accessibility": 95,
+      "performance": 99,
+      "accessibility": 100,
       "bestPractices": 100,
-      "seo": 91,
-      "lcpMs": 1009,
-      "clsScore": 0,
-      "tbtMs": 3
+      "seo": 92,
+      "lcpMs": 815,
+      "clsScore": 0.001,
+      "tbtMs": 0
     },
     {
       "page": "detalhe",
       "pageLabel": "Detalhe do NFT",
       "profile": "mobile",
       "profileLabel": "Mobile",
-      "performance": 81,
-      "accessibility": 97,
+      "performance": 87,
+      "accessibility": 100,
       "bestPractices": 100,
-      "seo": 91,
-      "lcpMs": 3684,
+      "seo": 92,
+      "lcpMs": 3528,
       "clsScore": 0,
-      "tbtMs": 254
+      "tbtMs": 14
     },
     {
       "page": "detalhe",
       "pageLabel": "Detalhe do NFT",
       "profile": "desktop",
       "profileLabel": "Desktop",
-      "performance": 94,
-      "accessibility": 97,
+      "performance": 99,
+      "accessibility": 100,
       "bestPractices": 100,
-      "seo": 91,
-      "lcpMs": 1067,
-      "clsScore": 0.117,
+      "seo": 92,
+      "lcpMs": 814,
+      "clsScore": 0.004,
       "tbtMs": 0
     }
   ]
