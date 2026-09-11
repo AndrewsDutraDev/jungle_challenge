@@ -78,8 +78,13 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
     {
+      // README §9 pede os dois viewports em Chromium. `devices['iPhone 13']`
+      // é WebKit — além de contrariar o enunciado, ele trazia instabilidades
+      // próprias no Windows (`Frame load interrupted` em navegações) que não
+      // vinham da aplicação. Pixel 5 é o equivalente Chromium (mobile + touch),
+      // com o viewport fixado em 390px, uma das larguras exigidas na §8.
       name: 'chromium-mobile',
-      use: { ...devices['iPhone 13'] },
+      use: { ...devices['Pixel 5'], viewport: { width: 390, height: 844 } },
     },
   ],
   webServer: {
