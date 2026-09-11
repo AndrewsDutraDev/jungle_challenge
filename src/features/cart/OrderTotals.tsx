@@ -15,25 +15,25 @@ export function OrderTotals({ quote, isLoading }: { quote: Quote | undefined; is
   }
 
   return (
-    <dl className="space-y-2 text-body text-text-secondary">
-      <div className="flex justify-between">
+    <dl className="space-y-3 text-[15px] text-foreground">
+      <div className="flex items-center justify-between">
         <dt>Subtotal</dt>
-        <dd className="text-text-primary">{formatEth(quote.subtotalEth)}</dd>
+        <dd className="text-[18px]">{formatEth(quote.subtotalEth)}</dd>
       </div>
-      <div className="flex justify-between">
+      <div className="flex items-center justify-between">
         <dt>Desconto do lançamento</dt>
-        <dd className={quote.couponValid ? 'text-success' : 'text-text-primary'}>
+        <dd className={quote.couponValid ? 'text-success' : undefined}>
           {quote.couponValid ? `(−) ${formatEth(quote.discountEth)}` : formatEth('0')}
         </dd>
       </div>
-      <div className="flex justify-between">
+      <div className="flex items-center justify-between">
         <dt>Taxa de rede</dt>
-        <dd className="text-text-primary">{formatEth(quote.networkFeeEth)}</dd>
+        <dd className="text-[18px]">{formatEth(quote.networkFeeEth)}</dd>
       </div>
-      <p className="text-tiny text-text-secondary/70">Taxa estimada</p>
-      <div className="flex justify-between border-t border-border pt-2 text-body-lg font-bold">
-        <dt className="text-text-primary">Total</dt>
-        <dd className="text-primary">{formatEth(quote.totalEth)}</dd>
+      <p className="text-right text-[12px] text-text-accent">Taxa estimada</p>
+      <div className="flex items-center justify-between font-bold">
+        <dt className="text-[16px]">Total</dt>
+        <dd className="text-[18px] text-text-accent">{formatEth(quote.totalEth)}</dd>
       </div>
     </dl>
   )

@@ -1,0 +1,27 @@
+import * as React from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+import { Input } from './input'
+import { cn } from '@/lib/utils'
+
+/** Campo de senha com o olho de mostrar/ocultar que o Figma usa em login, cadastro e perfil. */
+export const PasswordInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...props }, ref) => {
+    const [visible, setVisible] = React.useState(false)
+
+    return (
+      <div className="relative">
+        <Input ref={ref} type={visible ? 'text' : 'password'} className={cn('pr-11', className)} {...props} />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? 'Ocultar senha' : 'Mostrar senha'}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </button>
+      </div>
+    )
+  },
+)
+PasswordInput.displayName = 'PasswordInput'

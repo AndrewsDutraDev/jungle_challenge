@@ -33,13 +33,21 @@ test.describe('Perfil e carteiras', () => {
 
     await page.locator('#current-password').fill('senha-errada')
     await page.locator('#new-password').fill('novaSenha123')
+    await page.locator('#confirm-password').fill('novaSenha123')
     await page.getByRole('button', { name: 'Alterar senha' }).click()
     await expect(page.getByText('Senha atual incorreta.')).toBeVisible()
 
     await page.locator('#current-password').fill(SEED_USERS.ana.password)
     await page.locator('#new-password').fill('123')
+    await page.locator('#confirm-password').fill('123')
     await page.getByRole('button', { name: 'Alterar senha' }).click()
     await expect(page.getByText('Senha muito curta.')).toBeVisible()
+
+    // A confirmação é validada no cliente, antes de chamar a API.
+    await page.locator('#new-password').fill('novaSenha123')
+    await page.locator('#confirm-password').fill('outraSenha123')
+    await page.getByRole('button', { name: 'Alterar senha' }).click()
+    await expect(page.getByText('As senhas não coincidem.')).toBeVisible()
   })
 
   test('cadastrar carteira valida endereço e persiste após criação', async ({ page }) => {

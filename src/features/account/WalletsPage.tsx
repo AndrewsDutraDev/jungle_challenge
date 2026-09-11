@@ -43,7 +43,10 @@ export function WalletsPage() {
   }
 
   return (
-    <AccountLayout title="Carteiras" description="Cadastre e edite suas carteiras principal e secundária.">
+    <AccountLayout
+      title="Carteira principal"
+      description="Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados."
+    >
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -52,6 +55,12 @@ export function WalletsPage() {
           <CardContent className="space-y-3">
             {isLoading && <Skeleton className="h-16 w-full" />}
             {!isLoading && wallets?.length === 0 && <p className="text-caption text-text-secondary">Nenhuma carteira cadastrada ainda.</p>}
+            {!isLoading && wallets && wallets.length > 0 && !wallets.some((w) => w.role === 'secondary') && (
+              <p className="text-caption text-text-secondary">
+                <span className="font-bold text-text-primary">Carteira secundária:</span> você ainda não adicionou uma carteira
+                secundária.
+              </p>
+            )}
             {wallets?.map((wallet) => (
               <div key={wallet.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
                 <div>

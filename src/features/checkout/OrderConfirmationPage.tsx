@@ -59,7 +59,8 @@ export function OrderConfirmationPage() {
 
   return (
     <div className="container flex justify-center py-14">
-      <Card className="w-full max-w-lg bg-surface-dark p-6">
+      {/* A faixa laranja na base do card vem do Figma (node 11:4385). */}
+      <Card className="w-full max-w-lg overflow-hidden border-b-4 border-b-primary bg-surface-dark p-6">
         <div className="flex flex-col items-center text-center">
           <Mail className="h-10 w-10 text-primary" />
           <h1 className="mt-3 text-heading font-bold text-text-primary">Seus NFTs agora estão na sua carteira</h1>
@@ -85,6 +86,11 @@ export function OrderConfirmationPage() {
         </div>
 
         <h2 className="mb-3 mt-5 text-body font-bold text-text-primary">Detalhes da transação</h2>
+        <div className="mb-2 flex items-center gap-3 text-tiny text-text-secondary">
+          <span className="flex-1">NFTs</span>
+          <span className="w-10 text-right">Edições</span>
+          <span className="w-20 text-right">Subtotal</span>
+        </div>
         <ul className="space-y-3">
           {order.items.map((item) => (
             <li key={item.nftId} className="flex items-center gap-3">
@@ -95,8 +101,8 @@ export function OrderConfirmationPage() {
                 <p className="truncate text-caption font-medium text-text-primary">{item.name}</p>
                 <p className="text-tiny text-text-secondary">ID do token: #{item.tokenId}</p>
               </div>
-              <span className="text-caption text-text-secondary">x{item.quantity}</span>
-              <span className="text-caption font-bold text-primary">{formatEth(item.subtotalEth)}</span>
+              <span className="w-10 text-right text-caption text-text-secondary">(x {item.quantity})</span>
+              <span className="w-20 text-right text-caption font-bold text-text-accent">{formatEth(item.subtotalEth)}</span>
             </li>
           ))}
         </ul>

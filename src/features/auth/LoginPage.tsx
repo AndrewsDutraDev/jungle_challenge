@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Route } from '@/routes/login'
 import { AuthCard } from './AuthCard'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useLoginMutation } from '@/lib/api/auth'
@@ -58,9 +59,8 @@ export function LoginPage() {
         </div>
         <div>
           <Label htmlFor="login-password">Senha</Label>
-          <Input
+          <PasswordInput
             id="login-password"
-            type="password"
             required
             autoComplete="current-password"
             value={password}
@@ -74,6 +74,11 @@ export function LoginPage() {
               {fieldErrors.password}
             </p>
           )}
+          <p className="mt-1.5 text-right">
+            <span className="cursor-not-allowed text-tiny text-text-accent" title="Fora do escopo desta entrega">
+              Esqueceu a senha?
+            </span>
+          </p>
         </div>
 
         {formError && !Object.keys(fieldErrors).length && (

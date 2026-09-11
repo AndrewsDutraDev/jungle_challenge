@@ -5,6 +5,7 @@ import { useChangePasswordMutation, useUpdateAvatarMutation, useUpdateProfileMut
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AVATAR_PRESETS, buildAvatarDataUri } from '@/lib/avatar'
@@ -25,6 +26,8 @@ export function ProfilePage() {
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmError, setConfirmError] = useState<string | null>(null)
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({})
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
 
@@ -47,11 +50,17 @@ export function ProfilePage() {
     e.preventDefault()
     setPasswordErrors({})
     setPasswordMessage(null)
+    setConfirmError(null)
+    if (newPassword !== confirmPassword) {
+      setConfirmError('As senhas não coincidem.')
+      return
+    }
     try {
       await changePassword.mutateAsync({ currentPassword, newPassword })
       setPasswordMessage('Senha alterada com sucesso.')
       setCurrentPassword('')
       setNewPassword('')
+      setConfirmPassword('')
       toast.success('Senha alterada.')
     } catch (err) {
       if (err instanceof KurioApiError) setPasswordErrors(err.fields ?? { form: err.message })
@@ -59,7 +68,7 @@ export function ProfilePage() {
   }
 
   return (
-    <AccountLayout title="Meu perfil" description="Edite seus dados, avatar e senha de acesso.">
+    <AccountLayout title="Perfil do colecionador" description="Edite seus dados, avatar e senha de acesso.">
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -149,9 +158,8 @@ export function ProfilePage() {
             <form onSubmit={handlePasswordSubmit} className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="current-password">Senha atual</Label>
-                <Input
+                <PasswordInput
                   id="current-password"
-                  type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   aria-invalid={Boolean(passwordErrors.currentPassword)}
@@ -161,15 +169,30 @@ export function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="new-password">Nova senha</Label>
-                <Input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   aria-invalid={Boolean(passwordErrors.newPassword)}
                   className="mt-1.5"
                 />
                 {passwordErrors.newPassword && <p className="mt-1 text-tiny text-danger">{passwordErrors.newPassword}</p>}
+              </div>
+              <div>
+                <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+                <PasswordInput
+                  id="confirm-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  aria-invalid={Boolean(confirmError)}
+                  aria-describedby={confirmError ? 'confirm-password-error' : undefined}
+                  className="mt-1.5"
+                />
+                {confirmError && (
+                  <p id="confirm-password-error" className="mt-1 text-tiny text-danger">
+                    {confirmError}
+                  </p>
+                )}
               </div>
               {passwordErrors.form && (
                 <p role="alert" className="text-caption text-danger sm:col-span-2">

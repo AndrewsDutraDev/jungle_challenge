@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Route } from '@/routes/signup'
 import { AuthCard } from './AuthCard'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useSignupMutation } from '@/lib/api/auth'
@@ -84,9 +85,8 @@ export function SignupPage() {
         </div>
         <div>
           <Label htmlFor="signup-password">Senha</Label>
-          <Input
+          <PasswordInput
             id="signup-password"
-            type="password"
             required
             autoComplete="new-password"
             value={password}
@@ -103,9 +103,8 @@ export function SignupPage() {
         </div>
         <div>
           <Label htmlFor="signup-confirm">Confirmar senha</Label>
-          <Input
+          <PasswordInput
             id="signup-confirm"
-            type="password"
             required
             autoComplete="new-password"
             value={confirmPassword}

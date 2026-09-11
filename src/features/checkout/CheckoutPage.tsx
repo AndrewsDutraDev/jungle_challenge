@@ -13,12 +13,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatEth, truncateAddress } from '@/lib/format'
 import { getOrCreateIdempotencyKey, clearIdempotencyKey } from '@/lib/checkout/idempotency'
 import { KurioApiError } from '@/lib/api/client'
-import { NETWORK_LABELS } from '@/mocks/fixtures'
-import type { Wallet } from '@/types/api'
+import { NETWORK_LABELS, NETWORK_OPTIONS } from '@/mocks/fixtures'
+import type { Network, Wallet } from '@/types/api'
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'declined'
 
@@ -33,6 +34,9 @@ export function CheckoutPage() {
   const [displayName, setDisplayName] = useState(session?.user.displayName ?? '')
   const [username, setUsername] = useState(session?.user.username ?? '')
   const [note, setNote] = useState('')
+  const [network, setNetwork] = useState<Network | undefined>(undefined)
+  const [secondaryEns, setSecondaryEns] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [selectedWalletId, setSelectedWalletId] = useState<string | undefined>(undefined)
   const [connection, setConnection] = useState<ConnectionState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -42,6 +46,7 @@ export function CheckoutPage() {
     if (wallets && wallets.length > 0 && !selectedWalletId) {
       const primary = wallets.find((w) => w.role === 'primary') ?? wallets[0]
       setSelectedWalletId(primary.id)
+      setNetwork(primary.network)
       setConnection(primary.connected ? 'connected' : 'idle')
     }
   }, [wallets, selectedWalletId])
@@ -50,6 +55,7 @@ export function CheckoutPage() {
 
   function handleSelectWallet(wallet: Wallet) {
     setSelectedWalletId(wallet.id)
+    setNetwork(wallet.network)
     setConnection(wallet.connected ? 'connected' : 'idle')
   }
 
@@ -80,7 +86,7 @@ export function CheckoutPage() {
     try {
       const order = await createOrder.mutateAsync({
         walletId: selectedWallet.id,
-        network: selectedWallet.network,
+        network: network ?? selectedWallet.network,
         couponCode: quote.couponCode,
         idempotencyKey,
         quotedVersions,
@@ -132,14 +138,15 @@ export function CheckoutPage() {
 
   return (
     <div className="container py-10">
-      <p className="mb-6 text-caption text-text-secondary">
-        <Link to="/" className="hover:text-text-primary">
+      <p className="mb-3 text-[15px] font-bold leading-4 text-foreground">
+        <Link to="/" className="hover:text-text-accent">
           Início
         </Link>{' '}
-        / <Link to="/cart" className="hover:text-text-primary">
+        /{' '}
+        <Link to="/cart" className="hover:text-text-accent">
           Carrinho
         </Link>{' '}
-        / <span className="text-text-primary">Pagamento</span>
+        / <span className="text-text-accent">Pagamento</span>
       </p>
 
       <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_380px]">
@@ -155,9 +162,48 @@ export function CheckoutPage() {
                 <Label htmlFor="username">Nome de usuário *</Label>
                 <Input id="username" required value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" />
               </div>
-              <div className="sm:col-span-2">
+              <div>
+                <Label htmlFor="network">Rede *</Label>
+                <Select value={network} onValueChange={(v) => setNetwork(v as Network)}>
+                  <SelectTrigger id="network" className="mt-1.5">
+                    <SelectValue placeholder="Selecione uma rede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NETWORK_OPTIONS.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {NETWORK_LABELS[n]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="walletAddress">Endereço da carteira *</Label>
+                <Input
+                  id="walletAddress"
+                  readOnly
+                  value={selectedWallet?.address ?? ''}
+                  placeholder="Endereço 0x da carteira"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
                 <Label htmlFor="email">E-mail *</Label>
                 <Input id="email" type="email" required value={session?.user.email ?? ''} disabled className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="secondaryEns">ENS ou carteira secundária (opcional)</Label>
+                <Input
+                  id="secondaryEns"
+                  value={secondaryEns}
+                  onChange={(e) => setSecondaryEns(e.target.value)}
+                  placeholder={selectedWallet?.ensName ?? 'voce.eth'}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="referral">Código de indicação (opcional)</Label>
+                <Input id="referral" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="mt-1.5" />
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="note">Observação do colecionador (opcional)</Label>
@@ -166,8 +212,41 @@ export function CheckoutPage() {
             </div>
           </section>
 
+        </div>
+
+        <aside className="h-fit space-y-4 rounded-lg border border-border bg-surface-card p-5">
+          <div className="flex items-center justify-between text-[16px] text-foreground">
+            <h2 className="font-bold">Seus NFTs</h2>
+            <span className="font-medium">Subtotal</span>
+          </div>
+          <ul className="space-y-3">
+            {cart?.items.map((item) => {
+              const line = quote?.lines.find((l) => l.nftId === item.nftId)
+              return (
+                <li key={item.nftId} className="flex items-center gap-3">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md">
+                    <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-body font-bold text-foreground">{item.nft.name}</p>
+                    <p className="text-tiny text-secondary">
+                      ID do token: #{item.nft.tokenId} (x {item.quantity})
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[16px] font-bold text-text-accent">{formatEth(line?.subtotalEth ?? '0')}</span>
+                </li>
+              )
+            })}
+          </ul>
+
+          <Link to="/cart" className="block text-[12px] text-text-accent hover:underline">
+            Tem um código promocional? Aplique aqui
+          </Link>
+
+          <OrderTotals quote={quote} isLoading={quoteLoading} />
+
           <section>
-            <h2 className="mb-4 text-body-lg font-bold text-text-primary">Carteira e rede</h2>
+            <h2 className="mb-3 text-body font-bold text-foreground">Carteira e rede</h2>
             {walletsLoading && <Skeleton className="h-24 w-full" />}
             {!walletsLoading && (!wallets || wallets.length === 0) && (
               <p className="rounded-md border border-border-soft bg-surface-card p-4 text-caption text-text-secondary">
@@ -237,29 +316,6 @@ export function CheckoutPage() {
               </div>
             )}
           </section>
-        </div>
-
-        <aside className="h-fit space-y-4 rounded-lg border border-border bg-surface-card p-5">
-          <h2 className="text-body-lg font-bold text-text-primary">Seus NFTs</h2>
-          <ul className="space-y-3">
-            {cart?.items.map((item) => {
-              const line = quote?.lines.find((l) => l.nftId === item.nftId)
-              return (
-                <li key={item.nftId} className="flex items-center gap-3">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md">
-                    <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-caption font-medium text-text-primary">{item.nft.name}</p>
-                    <p className="text-tiny text-text-secondary">ID do token: #{item.nft.tokenId} (x {item.quantity})</p>
-                  </div>
-                  <span className="shrink-0 text-caption font-bold text-primary">{formatEth(line?.subtotalEth ?? '0')}</span>
-                </li>
-              )
-            })}
-          </ul>
-
-          <OrderTotals quote={quote} isLoading={quoteLoading} />
 
           {quote?.isStale && (
             <p className="flex items-start gap-2 rounded-md bg-warning/10 p-2.5 text-tiny text-warning">
