@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Socket } from 'socket.io-client'
-import { getSocket } from './client'
+import { disconnectSocket, getSocket } from './client'
 import { queryKeys } from '@/lib/query/keys'
+import { useSessionQuery } from '@/lib/api/auth'
 import type { Nft, NftUpdatedEvent, Order, OrderUpdatedEvent, Paginated } from '@/types/api'
 import { decodeUserIdFromSession } from '@/lib/auth/session-user'
 
@@ -10,17 +11,31 @@ import { decodeUserIdFromSession } from '@/lib/auth/session-user'
  * Assina `nft.updated` e `order.updated`, mantém o cache do TanStack Query
  * sincronizado e reconcilia via REST após reconectar. Deve ser montado uma
  * única vez, próximo da raiz da árvore.
+ *
+ * A conexão pertence à sessão: ao sair ou trocar de conta, o socket e as
+ * inscrições da sessão anterior são encerrados e refeitos do zero, junto com
+ * o registro de eventos já vistos.
  */
 export function useRealtime() {
   const queryClient = useQueryClient()
+  const { data: session, isPending: sessionPending } = useSessionQuery()
+  const userId = session?.user.id ?? null
   const seenEvents = useRef(new Set<string>())
   const nftVersions = useRef(new Map<string, number>())
   const orderVersions = useRef(new Map<string, number>())
   const wasDisconnected = useRef(false)
 
   useEffect(() => {
+    // Espera a sessão ser conhecida para não abrir um socket que seria
+    // derrubado logo em seguida.
+    if (sessionPending) return
+
     let cancelled = false
     let socketRef: Socket | null = null
+    seenEvents.current.clear()
+    nftVersions.current.clear()
+    orderVersions.current.clear()
+    wasDisconnected.current = false
 
     function handleNftUpdated(event: NftUpdatedEvent) {
       if (seenEvents.current.has(event.eventId)) return
@@ -98,7 +113,11 @@ export function useRealtime() {
     // flag `cancelled` para não vazar listeners se o componente desmontar
     // (ou os efeitos re-executarem) antes disso.
     getSocket().then((socket) => {
-      if (cancelled) return
+      if (cancelled) {
+        // A sessão mudou antes de o socket ficar pronto: ele é órfão.
+        socket.disconnect()
+        return
+      }
       socketRef = socket
       socket.on('nft.updated', handleNftUpdated)
       socket.on('order.updated', handleOrderUpdated)
@@ -114,6 +133,7 @@ export function useRealtime() {
         socketRef.off('connect', handleConnect)
         socketRef.off('disconnect', handleDisconnect)
       }
+      disconnectSocket()
     }
-  }, [queryClient])
+  }, [queryClient, userId, sessionPending])
 }

@@ -10,10 +10,13 @@ export type ScenarioId =
   | 'empty-catalog'
   | 'slow-network'
   | 'flaky-network'
+  | 'out-of-order'
   | 'offline'
   | 'server-errors'
   | 'session-expired'
   | 'price-drift'
+  | 'sold-out'
+  | 'wallet-declined'
   | 'order-timeout'
   | 'order-declined'
 

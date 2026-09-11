@@ -1,14 +1,23 @@
 import { http, HttpResponse } from 'msw'
 import type { CreateOrderPayload, Order, OrderStatus } from '@/types/api'
-import { createId, getDb, saveDb, type DbOrder } from '../db'
+import { createId, getDb, saveDb, type DbOrder, type DbState } from '../db'
 import { applyNetworkDelay, isScenario, maybeFailConnection, sleep } from '../scenarios'
 import { errors } from '../respond'
 import { resolveSession } from '../session'
 import { getOrCreateCart, ownerKeyForUser } from './cart-shared'
 import { computeQuote } from './quote-shared'
-import { emitNftUpdated, emitOrderUpdated } from '../socket'
+import { applyNftChange, emitOrderUpdated } from '../socket'
 
-function toApiOrder(order: DbOrder, nftsById: Map<string, { name: string; seed: number; palette: [string, string]; tokenId: string; imageUrl: string }>): Order {
+/** Tempo até a "rede de pagamento" decidir um pedido pendente — fixo, para ser reproduzível. */
+const ORDER_OUTCOME_DELAY_MS = 3000
+
+type NftMeta = { name: string; seed: number; palette: [string, string]; tokenId: string; imageUrl: string }
+
+function nftMetaById(db: DbState): Map<string, NftMeta> {
+  return new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId, imageUrl: n.imageUrl }]))
+}
+
+function toApiOrder(order: DbOrder, nftsById: Map<string, NftMeta>): Order {
   return {
     id: order.id,
     status: order.status,
@@ -45,7 +54,7 @@ async function resolveOrderIfDue(order: DbOrder): Promise<DbOrder> {
   if (Date.now() < order.outcomeAt) return order
 
   const db = await getDb()
-  const declined = isScenario('order-declined') || Math.random() < 0.12
+  const declined = isScenario('order-declined')
   order.status = declined ? 'declined' : 'confirmed'
   order.transactionHash = declined ? null : `0x${createId('tx').replace(/[^a-f0-9]/gi, '').padEnd(64, '0').slice(0, 64)}`
   order.updatedAt = new Date().toISOString()
@@ -105,15 +114,26 @@ export const orderHandlers = [
       const sameRequest = existing.walletId === payload.walletId && existing.network === payload.network
       if (!sameRequest) return errors.idempotencyMismatch()
       await resolveOrderIfDue(existing)
-      const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId, imageUrl: n.imageUrl }]))
-      return HttpResponse.json(toApiOrder(existing, nftsById), { status: 200 })
+      return HttpResponse.json(toApiOrder(existing, nftMetaById(db)), { status: 200 })
     }
 
     const wallet = db.wallets.find((w) => w.id === payload.walletId && w.userId === context.user.id)
     if (!wallet) return errors.validation('Carteira inválida.', { walletId: 'Selecione uma carteira cadastrada.' })
+    if (!wallet.connected) {
+      return errors.validation('Conecte a carteira antes de confirmar a compra.', { walletId: 'Carteira desconectada.' })
+    }
 
     const cart = await getOrCreateCart(ownerKeyForUser(context.user.id))
     if (cart.items.length === 0) return errors.validation('Carrinho vazio.')
+
+    // Cenário "sold-out": no instante da confirmação, outro colecionador leva a
+    // última edição de um item do carrinho. O evento sai pelo Socket.IO e a
+    // revalidação logo abaixo recusa a cotação — o mesmo caminho de uma
+    // corrida real entre dois compradores.
+    if (isScenario('sold-out')) {
+      const target = cart.items.find((item) => (db.nfts.find((n) => n.id === item.nftId)?.editionsAvailable ?? 0) > 0)
+      if (target) await applyNftChange(target.nftId, { editionsAvailable: 0 })
+    }
 
     cart.couponCode = payload.couponCode
     const quote = await computeQuote(cart, false)
@@ -148,33 +168,23 @@ export const orderHandlers = [
       updatedAt: new Date(now).toISOString(),
       version: 1,
       idempotencyKey: payload.idempotencyKey,
-      outcomeAt: now + 2200 + Math.random() * 1600,
+      outcomeAt: now + ORDER_OUTCOME_DELAY_MS,
     }
     db.orders.push(order)
+    saveDb()
 
-    // Debita a disponibilidade e emite nft.updated para refletir em catálogo/detalhe/carrinho de outras abas.
+    // Debita a disponibilidade; `applyNftChange` emite nft.updated para
+    // catálogo/detalhe/carrinho de outras abas.
     for (const line of quote.lines) {
       const nft = db.nfts.find((n) => n.id === line.nftId)
-      if (!nft) continue
-      const previousPriceEth = nft.priceEth
-      nft.editionsAvailable = Math.max(0, nft.editionsAvailable - line.quantity)
-      nft.version += 1
-      emitNftUpdated({
-        nftId: nft.id,
-        version: nft.version,
-        priceEth: nft.priceEth,
-        previousPriceEth,
-        editionsAvailable: nft.editionsAvailable,
-      })
+      if (nft) await applyNftChange(nft.id, { editionsAvailable: nft.editionsAvailable - line.quantity })
     }
-    saveDb()
-    scheduleResolution(order.id, order.outcomeAt - now)
+    scheduleResolution(order.id, ORDER_OUTCOME_DELAY_MS)
 
     await applyNetworkDelay()
     if (isScenario('order-timeout')) await sleep(5200)
 
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId, imageUrl: n.imageUrl }]))
-    return HttpResponse.json(toApiOrder(order, nftsById), { status: 201 })
+    return HttpResponse.json(toApiOrder(order, nftMetaById(db)), { status: 201 })
   }),
 
   http.get('/api/orders/:id', async ({ request, params }) => {
@@ -183,12 +193,12 @@ export const orderHandlers = [
     if (!context) return expired ? errors.sessionExpired() : errors.unauthorized()
 
     const db = await getDb()
-    const order = db.orders.find((o) => o.id === params.id && o.userId === context.user.id)
+    const order = db.orders.find((o) => o.id === params.id)
     if (!order) return errors.notFound('Pedido não encontrado.')
+    if (order.userId !== context.user.id) return errors.forbidden('Este pedido pertence a outra conta.')
     await resolveOrderIfDue(order)
 
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId, imageUrl: n.imageUrl }]))
-    return HttpResponse.json(toApiOrder(order, nftsById))
+    return HttpResponse.json(toApiOrder(order, nftMetaById(db)))
   }),
 
   http.get('/api/orders', async ({ request }) => {
@@ -199,8 +209,7 @@ export const orderHandlers = [
     const db = await getDb()
     const orders = db.orders.filter((o) => o.userId === context.user.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     for (const o of orders) await resolveOrderIfDue(o)
-    const nftsById = new Map(db.nfts.map((n) => [n.id, { name: n.name, seed: n.seed, palette: n.palette, tokenId: n.tokenId, imageUrl: n.imageUrl }]))
-    return HttpResponse.json({ items: orders.map((o) => toApiOrder(o, nftsById)) })
+    return HttpResponse.json({ items: orders.map((o) => toApiOrder(o, nftMetaById(db))) })
   }),
 ]
 

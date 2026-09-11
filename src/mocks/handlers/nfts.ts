@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import type { Nft, NftCategory, NftFacets, Network, Paginated, SortOption } from '@/types/api'
 import { CATEGORY_OPTIONS, NETWORK_OPTIONS } from '../fixtures'
 import { getDb } from '../db'
-import { applyNetworkDelay, isScenario, maybeFailConnection, maybeServerError } from '../scenarios'
+import { applyCatalogListDelay, applyNetworkDelay, isScenario, maybeFailConnection, maybeServerError } from '../scenarios'
 import { errors } from '../respond'
 
 function matchesFilters(
@@ -39,7 +39,7 @@ function sortNfts(nfts: Nft[], sort: SortOption): Nft[] {
 
 export const nftHandlers = [
   http.get('/api/nfts', async ({ request }) => {
-    await applyNetworkDelay()
+    await applyCatalogListDelay()
     try {
       maybeFailConnection()
     } catch {

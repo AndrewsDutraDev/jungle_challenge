@@ -48,29 +48,19 @@ test.describe('Estados de carregamento — skeletons, falha e recuperação', ()
   })
 
   test('falha de servidor mostra feedback de erro e nova tentativa recupera o conteúdo', async ({ page }) => {
-    test.setTimeout(120_000)
-    await useScenario(page, 'server-errors') // ~40% das chamadas falham com 500/503
+    await useScenario(page, 'server-errors') // toda chamada de dados responde 503
     await page.goto('/')
 
-    // Sob esse cenário, recarregamos algumas vezes até pegar uma falha — o
-    // objetivo é comprovar que a UI se recupera assim que uma tentativa tem
-    // sucesso, não medir a taxa de falha em si. Cada recarga espera a página
-    // chegar a um desfecho (erro ou catálogo): conferir logo após o `load`
-    // olhava antes de a consulta terminar, e recarregar em sequência com a
-    // página ainda subindo derrubava a sessão do navegador ("Not attached to
-    // an active page").
+    // O cliente repete falhas transitórias duas vezes, com backoff, antes de
+    // mostrar o erro.
     const catalogError = page.getByRole('alert').filter({ hasText: 'Não foi possível carregar o catálogo' })
-    const firstNft = page.locator('a[href^="/nft/"]').first()
-    let sawError = false
-    for (let attempt = 0; attempt < 8 && !sawError; attempt += 1) {
-      await page.reload()
-      await expect(catalogError.or(firstNft)).toBeVisible({ timeout: 15_000 })
-      sawError = await catalogError.isVisible()
-    }
-    test.skip(!sawError, 'Nenhuma das tentativas calhou de bater em erro de servidor (variação esperada do cenário).')
+    await expect(catalogError).toBeVisible({ timeout: 20_000 })
 
-    await useScenario(page, 'default')
-    await page.reload()
-    await expect(page.locator('a[href^="/nft/"]').first()).toBeVisible({ timeout: 10_000 })
+    // O "servidor" se recupera; a nova tentativa pela própria interface traz o
+    // catálogo sem recarregar a página.
+    await page.evaluate(() => window.localStorage.setItem('kurio:scenario', 'default'))
+    await catalogError.getByRole('button', { name: 'Tentar novamente' }).click()
+    await expect(page.locator('a[href^="/nft/"]').first()).toBeVisible()
+    await expect(catalogError).toHaveCount(0)
   })
 })

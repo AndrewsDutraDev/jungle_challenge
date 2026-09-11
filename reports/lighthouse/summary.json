@@ -1,6 +1,6 @@
 {
   "environment": {
-    "date": "2026-09-11T05:29:39.454Z",
+    "date": "2026-09-11T14:18:04.271Z",
     "nodeVersion": "v24.18.0",
     "lighthouseVersion": "13.4.1",
     "chromeVersion": "153.0.0.0",
@@ -19,9 +19,9 @@
       "accessibility": 100,
       "bestPractices": 100,
       "seo": 92,
-      "lcpMs": 3479,
+      "lcpMs": 3489,
       "clsScore": 0.002,
-      "tbtMs": 31
+      "tbtMs": 28
     },
     {
       "page": "inicio",
@@ -32,7 +32,7 @@
       "accessibility": 100,
       "bestPractices": 100,
       "seo": 92,
-      "lcpMs": 815,
+      "lcpMs": 833,
       "clsScore": 0.001,
       "tbtMs": 0
     },
@@ -45,9 +45,9 @@
       "accessibility": 100,
       "bestPractices": 100,
       "seo": 92,
-      "lcpMs": 3528,
+      "lcpMs": 3536,
       "clsScore": 0,
-      "tbtMs": 14
+      "tbtMs": 13
     },
     {
       "page": "detalhe",
@@ -58,8 +58,8 @@
       "accessibility": 100,
       "bestPractices": 100,
       "seo": 92,
-      "lcpMs": 814,
-      "clsScore": 0.004,
+      "lcpMs": 820,
+      "clsScore": 0.001,
       "tbtMs": 0
     }
   ]

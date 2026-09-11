@@ -55,6 +55,28 @@ test.describe('Autenticação e sessão', () => {
     await expect(page).toHaveURL(/redirect=/)
   })
 
+  test('sessão vence pelo tempo (relógio controlado) e o login retoma o destino', async ({ page }) => {
+    // A sessão do servidor simulado dura 30 minutos; o relógio controlado
+    // atravessa esse prazo sem espera real e sem cenário forçado.
+    await page.clock.install()
+    await loginAs(page, SEED_USERS.ana)
+    await page.goto('/profile')
+    await expect(page.locator('#profile-displayName')).toBeVisible()
+
+    await page.clock.fastForward('31:00')
+    // Voltar à aba revalida as consultas vencidas, e a primeira chamada à API
+    // já recebe SESSION_EXPIRED. (A reconexão do socket depois do salto no
+    // relógio pode chegar lá antes — o destino é o mesmo.)
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+    await expect(page).toHaveURL(/\/login\?.*redirect=/)
+    expect(new URL(page.url()).searchParams.get('redirect')).toMatch(/^\/profile/)
+
+    await page.locator('#login-email').fill(SEED_USERS.ana.email)
+    await page.locator('#login-password').fill(SEED_USERS.ana.password)
+    await page.getByRole('button', { name: 'Entrar' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
+  })
+
   test('troca de usuário isola dados privados (favoritos não vazam entre contas)', async ({ page }) => {
     await loginAs(page, SEED_USERS.ana)
     await page.goto('/')

@@ -1,5 +1,5 @@
 /**
- * Contratos REST/eventos da Kurio. Documentados também em docs/api-contracts.md.
+ * Contratos REST/eventos da Kurio. Documentados também em ARCHITECTURE.md § Contrato REST.
  * Valores em ETH trafegam como string decimal (nunca number) para preservar precisão.
  */
 
@@ -270,6 +270,12 @@ export interface UpsertWalletPayload {
   network: Network
   address: string
   ensName?: string
+}
+
+export interface WalletConnectionResult {
+  /** `declined` quando o usuário recusa na carteira simulada (cenário `wallet-declined`). */
+  status: 'connected' | 'declined'
+  wallet: Wallet
 }
 
 // ---------------------------------------------------------------------------

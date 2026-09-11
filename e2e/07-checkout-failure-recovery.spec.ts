@@ -31,6 +31,35 @@ test.describe('Checkout — falhas e recuperação', () => {
     await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1)
   })
 
+  test('carteira recusa a conexão e desconectar bloqueia a confirmação', async ({ page }) => {
+    await useScenario(page, 'wallet-declined')
+    await loginAs(page, SEED_USERS.ana)
+    await addFirstNftToCartAndReachCheckout(page) // a carteira seed de Ana já nasce conectada
+    const confirm = page.getByRole('button', { name: 'Confirmar compra' })
+
+    await page.getByRole('button', { name: 'Desconectar' }).click()
+    await expect(page.getByText('Carteira não conectada')).toBeVisible()
+    await expect(confirm).toBeDisabled()
+
+    await page.getByRole('button', { name: 'Conectar', exact: true }).click()
+    await expect(page.getByText('Conexão recusada pela carteira.')).toBeVisible()
+    await expect(confirm).toBeDisabled()
+  })
+
+  test('edição esgotada no instante da compra bloqueia a confirmação sem criar pedido', async ({ page }) => {
+    await useScenario(page, 'sold-out')
+    await loginAs(page, SEED_USERS.ana)
+    await addFirstNftToCartAndReachCheckout(page)
+
+    await page.getByRole('button', { name: 'Confirmar compra' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'mudaram desde a última cotação' })).toBeVisible()
+    await expect(page).toHaveURL(/\/checkout/)
+    await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+
+    const orders = await fetchOrders(page)
+    expect(orders.items).toHaveLength(0)
+  })
+
   test('clique repetido em "Confirmar compra" não duplica o pedido', async ({ page }) => {
     await loginAs(page, SEED_USERS.ana)
     await addFirstNftToCartAndReachCheckout(page)

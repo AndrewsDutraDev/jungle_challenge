@@ -44,8 +44,12 @@ export async function getSocket(): Promise<Socket> {
       }),
     )
   }
-  socket = await socketPromise
-  return socket
+  const pending = socketPromise
+  const created = await pending
+  // Se `disconnectSocket()` rodou enquanto este socket nascia (troca de
+  // sessão), ele já não é o atual — não pode sobrescrever o novo.
+  if (socketPromise === pending) socket = created
+  return created
 }
 
 export function disconnectSocket() {

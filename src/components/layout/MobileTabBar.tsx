@@ -20,8 +20,9 @@ export function MobileTabBar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [term, setTerm] = useState('')
 
-  // Telas com rodapé próprio (barra de compra, resumo do carrinho) ou que ocupam a tela inteira.
-  const HIDDEN_ON = ['/login', '/signup', '/cart']
+  // Telas com rodapé próprio (barra de compra, resumo do carrinho, botão de
+  // confirmar do pagamento) ou que ocupam a tela inteira.
+  const HIDDEN_ON = ['/login', '/signup', '/cart', '/checkout']
   if (pathname.startsWith('/nft/') || HIDDEN_ON.includes(pathname)) return null
 
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0

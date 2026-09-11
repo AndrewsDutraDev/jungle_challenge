@@ -33,7 +33,9 @@ export function OrderTotals({ quote, isLoading }: { quote: Quote | undefined; is
       <p className="text-right text-[12px] text-text-accent">Taxa estimada</p>
       <div className="flex items-center justify-between font-bold">
         <dt className="text-[16px]">Total</dt>
-        <dd className="text-[18px] text-text-accent">{formatEth(quote.totalEth)}</dd>
+        <dd data-testid="order-total" className="text-[18px] text-text-accent">
+          {formatEth(quote.totalEth)}
+        </dd>
       </div>
     </dl>
   )

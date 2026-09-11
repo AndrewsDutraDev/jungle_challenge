@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
 import { queryKeys } from '@/lib/query/keys'
-import type { UpsertWalletPayload, Wallet } from '@/types/api'
+import type { UpsertWalletPayload, Wallet, WalletConnectionResult } from '@/types/api'
 
 export function useWalletsQuery(enabled: boolean) {
   return useQuery({
@@ -33,5 +33,32 @@ export function useUpdateWalletMutation() {
       return data
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.wallets() }),
+  })
+}
+
+function replaceWallet(queryClient: ReturnType<typeof useQueryClient>, wallet: Wallet) {
+  queryClient.setQueryData<Wallet[]>(queryKeys.wallets(), (prev) => prev?.map((w) => (w.id === wallet.id ? wallet : w)))
+}
+
+/** Pede à carteira simulada que se conecte; `status: 'declined'` quando o usuário recusa. */
+export function useConnectWalletMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (walletId: string) => {
+      const { data } = await apiClient.post<WalletConnectionResult>(`/wallets/${walletId}/connect`)
+      return data
+    },
+    onSuccess: (result) => replaceWallet(queryClient, result.wallet),
+  })
+}
+
+export function useDisconnectWalletMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (walletId: string) => {
+      const { data } = await apiClient.post<Wallet>(`/wallets/${walletId}/disconnect`)
+      return data
+    },
+    onSuccess: (wallet) => replaceWallet(queryClient, wallet),
   })
 }

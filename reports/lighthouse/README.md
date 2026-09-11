@@ -22,7 +22,7 @@ execução mais recente de `summary.json`.
 
 | | |
 | --- | --- |
-| Data | 2026-09-11T05:29:39.454Z |
+| Data | 2026-09-11T14:18:04.271Z |
 | Node.js | v24.18.0 |
 | Lighthouse | 13.4.1 |
 | Chrome | 153 (lido do *user agent* do próprio resultado, que informa só a versão maior) |
@@ -44,10 +44,10 @@ carregados como em produção.
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Início | Mobile | **88** | 100 | 100 | 92 | 3479ms | 0.002 | 31ms |
-| Início | Desktop | **99** | 100 | 100 | 92 | 815ms | 0.001 | 0ms |
-| Detalhe do NFT | Mobile | **87** | 100 | 100 | 92 | 3528ms | 0.000 | 14ms |
-| Detalhe do NFT | Desktop | **99** | 100 | 100 | 92 | 814ms | 0.004 | 0ms |
+| Início | Mobile | **88** | 100 | 100 | 92 | 3489ms | 0.002 | 28ms |
+| Início | Desktop | **99** | 100 | 100 | 92 | 833ms | 0.001 | 0ms |
+| Detalhe do NFT | Mobile | **87** | 100 | 100 | 92 | 3536ms | 0.000 | 13ms |
+| Detalhe do NFT | Desktop | **99** | 100 | 100 | 92 | 820ms | 0.001 | 0ms |
 
 As três execuções de cada combinação ficaram idênticas ou a 1 ponto umas
 das outras.
@@ -117,6 +117,14 @@ reportar a causa honestamente.
 o MSW é carregado via `import()` dinâmico (chunk separado, fora do bundle
 síncrono do React/roteador), e as rotas de carrinho/checkout/perfil/
 carteiras são *code-split* por rota (chunks de 5–20KB, sob demanda).
+
+**Tentativa descartada — carregar aplicação e MSW em paralelo**: com a
+aplicação importada dinamicamente em `main.tsx`, o bundle da aplicação e o
+worker do MSW passam a baixar juntos. Medido nas mesmas condições, piorou o
+mobile: Início 88 → 86 (LCP 3.49s → 3.79s) e Detalhe 87 → 86 (LCP 3.54s →
+3.85s). Sob o throttling mobile os dois chunks disputam a mesma banda, e o
+bundle da aplicação deixa de ser pré-carregado pelo HTML — só é descoberto
+depois que o ponto de entrada executa. A mudança foi revertida.
 
 **Próximo passo possível**: dividir o `index-*.js` (565KB) — hoje ele
 carrega juntos o roteador, o React Query, os primitivos Radix e o cliente

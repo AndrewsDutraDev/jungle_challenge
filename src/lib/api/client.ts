@@ -50,7 +50,14 @@ export function onSessionExpired(handler: () => void) {
 }
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Sem o MSW ativo (ex.: Service Worker bloqueado), o host estático
+    // responde /api/* com o index.html. Tratar isso como falha de conexão
+    // leva a tela aos estados de erro, em vez de ler HTML como se fosse dado.
+    const contentType = String(response.headers['content-type'] ?? '')
+    if (contentType.includes('text/html')) return Promise.reject(new NetworkFailureError())
+    return response
+  },
   (error: AxiosError<ApiErrorBody>) => {
     if (error.response?.data?.error) {
       const { status, data } = error.response

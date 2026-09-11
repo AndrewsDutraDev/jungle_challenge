@@ -31,7 +31,7 @@ export function CatalogPage() {
     pageSize: 9,
   }
 
-  const { data, isLoading, isError, error, isFetching } = useNftListQuery(params)
+  const { data, isLoading, isError, error, isFetching, refetch } = useNftListQuery(params)
 
   function updateSearch(patch: Partial<CatalogSearch>) {
     navigate({ search: (prev) => ({ ...prev, ...patch }) })
@@ -79,6 +79,9 @@ export function CatalogPage() {
             <div className="rounded-lg border border-danger/40 bg-danger/10 p-6 text-center" role="alert">
               <p className="text-body font-medium text-text-primary">Não foi possível carregar o catálogo.</p>
               <p className="mt-1 text-caption text-text-secondary">{error instanceof Error ? error.message : 'Tente novamente.'}</p>
+              <Button size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
+                {isFetching ? 'Tentando…' : 'Tentar novamente'}
+              </Button>
             </div>
           )}
 

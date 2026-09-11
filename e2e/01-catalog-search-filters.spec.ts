@@ -73,6 +73,31 @@ test.describe('Catálogo — busca, filtros, ordenação e paginação', () => {
     await expect(page).toHaveURL(/page=2/)
   })
 
+  test('respostas fora de ordem não sobrescrevem o resultado da busca mais recente', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'No mobile os filtros ficam num drawer; o descarte de respostas obsoletas é o mesmo código nos dois.')
+    await useScenario(page, 'out-of-order')
+    await page.goto('/')
+    await page.locator('a[href^="/nft/"]').first().waitFor()
+
+    // Três filtros em sequência rápida. Neste cenário cada listagem responde
+    // mais rápido que a anterior, então a resposta da primeira busca (já
+    // obsoleta) é a última a chegar.
+    const categories = page.locator('fieldset', { hasText: 'Coleções' }).locator('input[type="checkbox"], button[role="checkbox"]')
+    await categories.nth(0).click()
+    await categories.nth(1).click()
+    await categories.nth(2).click()
+    await expect(page).toHaveURL(/category=/)
+
+    const status = page.getByRole('status').filter({ hasText: /encontrado/ })
+    await page.waitForTimeout(2_000) // deixa a resposta atrasada chegar
+    const shown = await status.innerText()
+
+    // Recarregar a mesma URL faz uma única busca, sem corrida: o resultado
+    // precisa ser o mesmo que a tela mostrava.
+    await page.reload()
+    await expect(status).toHaveText(shown)
+  })
+
   test('resultado vazio mostra estado dedicado e ação de limpar filtros', async ({ page }) => {
     await useScenario(page, 'empty-catalog')
     await page.goto('/?q=inexistente')

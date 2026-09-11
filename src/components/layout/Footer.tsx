@@ -66,8 +66,9 @@ export function Footer() {
           <p className="text-caption leading-[22px] text-text-secondary">
             Receba lançamentos selecionados, histórias de criadores e novidades do mercado.
           </p>
-          <p role="status" className="text-caption text-success">
-            {sent ? 'Inscrição registrada nesta simulação.' : ''}
+          {/* Newsletter está fora do escopo: o envio não pode parecer bem-sucedido. */}
+          <p role="status" className="text-caption text-text-secondary">
+            {sent ? 'A newsletter não faz parte desta demonstração — nenhum e-mail foi registrado.' : ''}
           </p>
         </div>
       </div>

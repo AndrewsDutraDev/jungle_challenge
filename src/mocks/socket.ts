@@ -1,6 +1,6 @@
 import { ws } from 'msw'
 import { toSocketIo } from '@mswjs/socket.io-binding'
-import type { NftUpdatedEvent, OrderUpdatedEvent } from '@/types/api'
+import type { NftUpdatedEvent, OrderUpdatedEvent, RealtimeEvent } from '@/types/api'
 import { createId, getDb, saveDb } from './db'
 import { isScenario } from './scenarios'
 
@@ -24,6 +24,14 @@ type SocketIoClient = ReturnType<typeof toSocketIo>['client']
 
 const activeClients = new Set<SocketIoClient>()
 
+/**
+ * Últimos eventos emitidos, em ordem. O plano de controle dos mocks
+ * (`POST /api/mocks/events/:eventId/replay`) reenvia um deles idêntico —
+ * mesmo `eventId` e `version` — para reproduzir entrega duplicada ou atrasada.
+ */
+const EVENT_LOG_LIMIT = 100
+const eventLog: RealtimeEvent[] = []
+
 // "*" casa qualquer conexão WebSocket — necessário porque o MSW normaliza o
 // pathname removendo o prefixo "/socket.io/" antes de comparar com o padrão
 // do link, e porque o host varia entre dev, preview e o domínio publicado.
@@ -39,14 +47,28 @@ export const socketHandler = socketLink.addEventListener('connection', (connecti
   })
 })
 
-function broadcast(event: string, payload: unknown) {
+function deliver(event: RealtimeEvent) {
   for (const client of activeClients) {
     try {
-      client.emit(event, payload)
+      client.emit(event.type, event)
     } catch {
       activeClients.delete(client)
     }
   }
+}
+
+function broadcast(event: RealtimeEvent) {
+  eventLog.push(event)
+  if (eventLog.length > EVENT_LOG_LIMIT) eventLog.shift()
+  deliver(event)
+}
+
+/** Reenvia um evento já emitido, sem alterar nada. Retorna `null` se ele saiu do histórico. */
+export function replayEvent(eventId: string): RealtimeEvent | null {
+  const event = eventLog.find((e) => e.eventId === eventId)
+  if (!event) return null
+  deliver(event)
+  return event
 }
 
 export function emitNftUpdated(input: {
@@ -55,14 +77,15 @@ export function emitNftUpdated(input: {
   priceEth: string
   previousPriceEth: string
   editionsAvailable: number
-}) {
+}): NftUpdatedEvent {
   const event: NftUpdatedEvent = {
     type: 'nft.updated',
     eventId: createId('evt'),
     emittedAt: new Date().toISOString(),
     ...input,
   }
-  broadcast('nft.updated', event)
+  broadcast(event)
+  return event
 }
 
 export function emitOrderUpdated(input: {
@@ -71,14 +94,50 @@ export function emitOrderUpdated(input: {
   version: number
   status: OrderUpdatedEvent['status']
   transactionHash: string | null
-}) {
+}): OrderUpdatedEvent {
   const event: OrderUpdatedEvent = {
     type: 'order.updated',
     eventId: createId('evt'),
     emittedAt: new Date().toISOString(),
     ...input,
   }
-  broadcast('order.updated', event)
+  broadcast(event)
+  return event
+}
+
+/**
+ * Muda preço e/ou disponibilidade de um NFT "no servidor": grava no banco (o
+ * próximo GET já reflete) e emite `nft.updated` com a nova versão. É a única
+ * porta de entrada para essas mudanças — pedidos, o cenário `price-drift` e
+ * o plano de controle dos testes passam todos por aqui, então REST e
+ * Socket.IO nunca divergem.
+ */
+export async function applyNftChange(
+  nftId: string,
+  patch: { priceEth?: string; editionsAvailable?: number },
+): Promise<NftUpdatedEvent | null> {
+  const db = await getDb()
+  const nft = db.nfts.find((n) => n.id === nftId)
+  if (!nft) return null
+
+  const previousPriceEth = nft.priceEth
+  if (patch.priceEth !== undefined && patch.priceEth !== nft.priceEth) {
+    nft.previousPriceEth = previousPriceEth
+    nft.priceEth = patch.priceEth
+  }
+  if (patch.editionsAvailable !== undefined) {
+    nft.editionsAvailable = Math.max(0, Math.floor(patch.editionsAvailable))
+  }
+  nft.version += 1
+  saveDb()
+
+  return emitNftUpdated({
+    nftId: nft.id,
+    version: nft.version,
+    priceEth: nft.priceEth,
+    previousPriceEth,
+    editionsAvailable: nft.editionsAvailable,
+  })
 }
 
 export function hasActiveConnections(): boolean {
@@ -93,19 +152,24 @@ export function hasActiveConnections(): boolean {
 
 const PRICE_DRIFT_INTERVAL_MS = 2500
 let driftInterval: ReturnType<typeof setInterval> | null = null
+let driftTick = 0
+
+/** Zera o histórico de eventos e a sequência do `price-drift` — chamado pelo reset dos mocks. */
+export function resetRealtimeState() {
+  eventLog.length = 0
+  driftTick = 0
+}
 
 function roundEth(value: number): string {
   return Math.max(0.001, value).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') || '0'
 }
 
 /**
- * Inicia (uma única vez, de forma idempotente) o "gerador" de mudanças de
- * preço/disponibilidade usado pelo cenário `price-drift`. Fica ocioso
- * (retorna cedo) sempre que o cenário ativo não é `price-drift` ou não há
- * nenhum cliente Socket.IO conectado — então não há custo quando o cenário
- * não está em uso. Prioriza NFTs que já estão em algum carrinho, para que o
- * cenário do README ("um NFT no carrinho tem o preço alterado durante a
- * navegação") seja fácil de reproduzir deterministicamente nos testes.
+ * Inicia (uma única vez) o gerador de mudanças do cenário `price-drift`. Fica
+ * ocioso quando o cenário não está ativo ou não há cliente conectado. A
+ * sequência é fixa: percorre em rodízio os NFTs que estão em algum carrinho
+ * (em ordem de id), alterna +15% / −15% no preço e tira uma edição a cada
+ * três mudanças.
  */
 export function startPriceDriftDriver() {
   if (driftInterval) return
@@ -113,30 +177,19 @@ export function startPriceDriftDriver() {
     if (!isScenario('price-drift') || !hasActiveConnections()) return
 
     const db = await getDb()
-    if (db.nfts.length === 0) return
+    const cartedIds = [...new Set(db.carts.flatMap((c) => c.items.map((i) => i.nftId)))].sort()
+    const candidates = cartedIds.length > 0 ? cartedIds : db.nfts.slice(0, 1).map((n) => n.id)
+    if (candidates.length === 0) return
 
-    const cartedIds = new Set(db.carts.flatMap((c) => c.items.map((i) => i.nftId)))
-    const pool = db.nfts.filter((n) => cartedIds.has(n.id))
-    const candidates = pool.length > 0 ? pool : db.nfts
-    const nft = candidates[Math.floor(Math.random() * candidates.length)]
+    const tick = driftTick++
+    const nft = db.nfts.find((n) => n.id === candidates[tick % candidates.length])
     if (!nft) return
 
-    const previousPriceEth = nft.priceEth
-    const direction = Math.random() < 0.5 ? 0.85 : 1.15
-    nft.priceEth = roundEth(Number(nft.priceEth) * direction)
-    nft.previousPriceEth = previousPriceEth
-    if (nft.editionsAvailable > 0 && Math.random() < 0.35) {
-      nft.editionsAvailable -= 1
-    }
-    nft.version += 1
-    saveDb()
-
-    emitNftUpdated({
-      nftId: nft.id,
-      version: nft.version,
-      priceEth: nft.priceEth,
-      previousPriceEth,
-      editionsAvailable: nft.editionsAvailable,
+    const direction = tick % 2 === 0 ? 1.15 : 0.85
+    const loseEdition = tick % 3 === 2 && nft.editionsAvailable > 0
+    await applyNftChange(nft.id, {
+      priceEth: roundEth(Number(nft.priceEth) * direction),
+      editionsAvailable: loseEdition ? nft.editionsAvailable - 1 : undefined,
     })
   }, PRICE_DRIFT_INTERVAL_MS)
 }

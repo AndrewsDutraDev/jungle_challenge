@@ -12,11 +12,27 @@ import { cn } from '@/lib/utils'
 
 export function OrderConfirmationPage() {
   const { orderId } = Route.useParams()
-  const { data: order, isLoading } = useOrderQuery(orderId)
+  const { data: order, isLoading, error } = useOrderQuery(orderId)
 
   useEffect(() => {
     if (order && order.status !== 'pending') clearIdempotencyKey()
   }, [order])
+
+  // 404 (pedido inexistente) ou 403 (pedido de outra conta): a mensagem vem da API.
+  if (error && !order) {
+    return (
+      <div className="container flex min-h-[50vh] flex-col items-center justify-center gap-3 py-14 text-center" role="alert">
+        <XCircle className="h-10 w-10 text-danger" />
+        <p className="text-body-lg font-bold text-text-primary">Pedido indisponível</p>
+        <p className="max-w-sm text-caption text-text-secondary">
+          {error instanceof Error ? error.message : 'Não foi possível carregar este pedido.'}
+        </p>
+        <Button asChild variant="outline" className="mt-2">
+          <Link to="/">Voltar ao início</Link>
+        </Button>
+      </div>
+    )
+  }
 
   if (isLoading || !order) {
     return (
