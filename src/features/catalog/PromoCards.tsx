@@ -1,15 +1,18 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 import { NftArt } from '@/components/nft/NftArt'
+import { NFT_ARTWORKS } from '@/mocks/fixtures'
 
 const PROMOS = [
   {
+    image: NFT_ARTWORKS[0],
     seed: 17,
     palette: ['#D28A4C', '#241612'] as [string, string],
     title: 'Lançamentos gênesis de edição limitada',
     copy: 'Colecione edições escassas diretamente dos criadores antes da revelação pública.',
   },
   {
+    image: NFT_ARTWORKS[2],
     seed: 16,
     palette: ['#E89B55', '#140D0A'] as [string, string],
     title: 'Arte digital selecionada e muito mais',
@@ -23,7 +26,7 @@ export function PromoCards() {
       {PROMOS.map((promo) => (
         <div key={promo.title} className="relative flex h-[250px] overflow-hidden rounded-lg bg-surface-card">
           <div className="h-full w-2/5 shrink-0">
-            <NftArt seed={promo.seed} palette={promo.palette} title="" />
+            <NftArt src={promo.image} seed={promo.seed} palette={promo.palette} title="" />
           </div>
           <div className="flex flex-1 flex-col items-end justify-between p-6 text-right">
             <div>

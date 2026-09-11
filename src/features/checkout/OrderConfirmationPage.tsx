@@ -101,7 +101,7 @@ export function OrderConfirmationPage() {
             {order.items.map((item) => (
               <li key={item.nftId} className="flex items-center gap-3">
                 <div className="size-11 shrink-0 overflow-hidden rounded-md">
-                  <NftArt seed={item.imageSeed} palette={item.palette} title={item.name} />
+                  <NftArt src={item.imageUrl} seed={item.imageSeed} palette={item.palette} title={item.name} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[16px] font-bold leading-4 text-foreground">{item.name}</p>

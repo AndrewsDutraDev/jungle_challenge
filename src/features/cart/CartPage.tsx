@@ -89,7 +89,7 @@ export function CartPage() {
                   className="flex h-[100px] overflow-hidden rounded-[14px] bg-surface-card shadow-card"
                 >
                   <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="size-[100px] shrink-0">
-                    <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
+                    <NftArt src={item.nft.imageUrl} seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-2">
                     <p data-testid="cart-item-name" className="truncate text-[15px] font-bold leading-4 text-foreground">{item.nft.name}</p>
@@ -252,7 +252,7 @@ export function CartPage() {
                       <td className="py-0">
                         <div className="flex items-center gap-4">
                           <div className="size-[70px] shrink-0 overflow-hidden rounded-md">
-                            <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
+                            <NftArt src={item.nft.imageUrl} seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
                           </div>
                           <div className="py-2">
                             <Link data-testid="cart-item-name" to="/nft/$nftId" params={{ nftId: item.nftId }} className="text-[16px] font-bold leading-4 text-foreground hover:text-text-accent">

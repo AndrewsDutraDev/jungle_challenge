@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { mulberry32 } from '@/mocks/prng'
 import { cn } from '@/lib/utils'
 
@@ -7,14 +7,38 @@ interface NftArtProps {
   palette: [string, string]
   className?: string
   title?: string
+  /** Ilustração do Figma. Sem ela (ou se falhar), cai na arte procedural. */
+  src?: string
+  /** Largura de exibição, usada para o browser escolher entre 250w e 500w. */
+  sizes?: string
 }
 
-/**
- * Arte placeholder gerada proceduralmente a partir do `seed` do NFT —
- * nunca reproduzimos a ilustração original do Figma (personagens ilustrados),
- * só a paleta e a composição. Decisão registrada em ARCHITECTURE.md.
- */
-export function NftArt({ seed, palette, className, title }: NftArtProps) {
+export function NftArt({ seed, palette, className, title, src, sizes = '250px' }: NftArtProps) {
+  const [failed, setFailed] = useState(false)
+
+  if (src && !failed) {
+    // Cada arte é exportada do Figma em dois tamanhos; miniaturas e cards não
+    // precisam do arquivo de 500px que a página de detalhe usa.
+    const small = src.replace(/\.jpg$/, '-sm.jpg')
+    return (
+      <img
+        src={src}
+        srcSet={`${small} 250w, ${src} 500w`}
+        sizes={sizes}
+        alt={title ?? 'Arte do NFT'}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+        className={cn('h-full w-full object-cover', className)}
+      />
+    )
+  }
+
+  return <ProceduralArt seed={seed} palette={palette} className={className} title={title} />
+}
+
+/** Fallback determinístico: só a paleta e a composição, derivadas do `seed`. */
+function ProceduralArt({ seed, palette, className, title }: Omit<NftArtProps, 'src'>) {
   const shapes = useMemo(() => {
     const rng = mulberry32(seed)
     const count = 3 + Math.floor(rng() * 3)

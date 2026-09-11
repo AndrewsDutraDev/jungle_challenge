@@ -121,6 +121,13 @@ export const TOTAL_FIXTURE_NFTS = 42
 /** id determinístico do único NFT do seed com editionsAvailable = 0 (ver generateNftFixtures). */
 export const SOLD_OUT_FIXTURE_NFT_ID = `nft_${200 + TOTAL_FIXTURE_NFTS - 1}`
 
+/**
+ * As quatro ilustrações do Figma, exportadas em `public/nft`. O arquivo de
+ * design reaproveita essas mesmas quatro artes em todas as telas, então elas
+ * circulam pelo catálogo — o mesmo que o mockup faz.
+ */
+export const NFT_ARTWORKS = ['/nft/art-01.jpg', '/nft/art-02.jpg', '/nft/art-03.jpg', '/nft/art-04.jpg']
+
 export function generateNftFixtures(): Nft[] {
   const nfts: Nft[] = []
   for (let i = 0; i < TOTAL_FIXTURE_NFTS; i++) {
@@ -165,6 +172,7 @@ export function generateNftFixtures(): Nft[] {
       attributes: buildAttributes(rng),
       contractAddress: `0x${Array.from({ length: 40 }, () => Math.floor(rng() * 16).toString(16)).join('')}`,
       royaltyBps: pick(rng, [250, 500, 750]),
+      imageUrl: NFT_ARTWORKS[i % NFT_ARTWORKS.length],
       seed: seedBase,
       palette: pick(rng, PALETTES),
       createdAt: new Date(Date.now() - Math.floor(range(rng, 0, 90)) * 86_400_000).toISOString(),

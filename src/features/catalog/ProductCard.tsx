@@ -24,7 +24,7 @@ export function ProductCard({ nft }: { nft: Nft }) {
           params={{ nftId: nft.id }}
           className="block h-full w-full overflow-hidden rounded-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <NftArt seed={nft.seed} palette={nft.palette} title={nft.name} className="transition-transform duration-300 group-hover:scale-105" />
+          <NftArt src={nft.imageUrl} seed={nft.seed} palette={nft.palette} title={nft.name} className="transition-transform duration-300 group-hover:scale-105" />
         </Link>
         {soldOut && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink/60">

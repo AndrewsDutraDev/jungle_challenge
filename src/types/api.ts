@@ -104,6 +104,9 @@ export interface Nft {
   attributes: NftAttribute[]
   contractAddress: string
   royaltyBps: number
+  /** Arte do NFT (as quatro ilustrações do Figma, em public/nft). */
+  imageUrl: string
+  /** Mantidos como fallback da arte procedural quando a imagem não carrega. */
   seed: number
   palette: [string, string]
   createdAt: string
@@ -194,6 +197,7 @@ export type OrderStatus = 'pending' | 'confirmed' | 'declined'
 export interface OrderItem {
   nftId: string
   name: string
+  imageUrl: string
   imageSeed: number
   palette: [string, string]
   tokenId: string

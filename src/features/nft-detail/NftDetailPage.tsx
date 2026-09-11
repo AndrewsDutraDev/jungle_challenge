@@ -13,18 +13,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NotFound } from '@/components/layout/NotFound'
 import { formatEth } from '@/lib/format'
-import { CATEGORY_LABELS, NETWORK_LABELS } from '@/mocks/fixtures'
+import { CATEGORY_LABELS, NETWORK_LABELS, NFT_ARTWORKS } from '@/mocks/fixtures'
 import { KurioApiError } from '@/lib/api/client'
 import { useIsMobile } from '@/lib/use-media-query'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 /**
- * A galeria do Figma tem quatro vistas da peça, mas a API expõe um único
- * `seed` por NFT — as vistas são derivadas dele, mantendo a paleta do token e
- * a mesma decisão de arte procedural usada no catálogo (ver NftArt).
+ * A galeria do Figma tem quatro vistas da peça. Como o arquivo de design
+ * reaproveita as mesmas quatro artes em todas as telas, a galeria abre na arte
+ * do próprio NFT e segue com as outras da coleção.
  */
 const VIEW_OFFSETS = [0, 7, 13, 29]
+
+function galleryImages(current: string): string[] {
+  return [current, ...NFT_ARTWORKS.filter((art) => art !== current)]
+}
 
 export function NftDetailPage() {
   const { nftId } = Route.useParams()
@@ -77,6 +81,7 @@ export function NftDetailPage() {
   const soldOut = nft.editionsAvailable === 0
   const maxQuantity = Math.max(1, Math.min(nft.editionsAvailable, 20))
   const roundedRating = Math.round(nft.rating)
+  const views = galleryImages(nft.imageUrl)
 
   async function handleAddToCart(goToCheckout: boolean) {
     try {
@@ -100,12 +105,12 @@ export function NftDetailPage() {
       <div className="mt-3 flex flex-col gap-8 lg:flex-row">
         <div className="flex flex-col-reverse gap-4 lg:w-[573px] lg:flex-row lg:gap-7">
           <div className="flex gap-3 lg:w-[100px] lg:shrink-0 lg:flex-col lg:gap-4">
-            {VIEW_OFFSETS.map((offset, index) => (
+            {views.map((image, index) => (
               <button
-                key={offset}
+                key={image}
                 type="button"
                 onClick={() => setActiveView(index)}
-                aria-label={`Ver imagem ${index + 1} de ${VIEW_OFFSETS.length}`}
+                aria-label={`Ver imagem ${index + 1} de ${views.length}`}
                 aria-pressed={activeView === index}
                 className={cn(
                   'aspect-square flex-1 overflow-hidden rounded-lg bg-surface-card lg:size-[100px] lg:flex-none',
@@ -113,7 +118,7 @@ export function NftDetailPage() {
                   activeView === index ? 'border border-primary' : 'border border-transparent',
                 )}
               >
-                <NftArt seed={nft.seed + offset} palette={nft.palette} title="" />
+                <NftArt src={image} seed={nft.seed + VIEW_OFFSETS[index]} palette={nft.palette} title="" />
               </button>
             ))}
           </div>
@@ -151,7 +156,7 @@ export function NftDetailPage() {
               )}
             </div>
             <div className="aspect-square w-full overflow-hidden rounded-3xl">
-              <NftArt seed={nft.seed + VIEW_OFFSETS[activeView]} palette={nft.palette} title={nft.name} />
+              <NftArt src={views[activeView]} sizes="(min-width: 1024px) 444px, 90vw" seed={nft.seed + VIEW_OFFSETS[activeView]} palette={nft.palette} title={nft.name} />
             </div>
             <span
               aria-hidden

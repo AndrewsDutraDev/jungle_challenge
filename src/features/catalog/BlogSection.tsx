@@ -1,7 +1,9 @@
 import { NftArt } from '@/components/nft/NftArt'
+import { NFT_ARTWORKS } from '@/mocks/fixtures'
 
 const POSTS = [
   {
+    image: NFT_ARTWORKS[0],
     seed: 501,
     palette: ['#CFB28C', '#241612'] as [string, string],
     meta: '12 de setembro · Leitura de 6 min',
@@ -9,6 +11,7 @@ const POSTS = [
     excerpt: 'Aprenda a colecionar, negociar e verificar ativos digitais.',
   },
   {
+    image: NFT_ARTWORKS[1],
     seed: 502,
     palette: ['#D28A4C', '#140D0A'] as [string, string],
     meta: '13 de setembro · Leitura de 2 min',
@@ -16,6 +19,7 @@ const POSTS = [
     excerpt: 'Conheça criadores que moldam a cultura digital.',
   },
   {
+    image: NFT_ARTWORKS[2],
     seed: 503,
     palette: ['#E89B55', '#241612'] as [string, string],
     meta: '15 de setembro · Leitura de 3 min',
@@ -23,6 +27,7 @@ const POSTS = [
     excerpt: 'Entenda raridade, procedência, direitos autorais e utilidade.',
   },
   {
+    image: NFT_ARTWORKS[3],
     seed: 504,
     palette: ['#B39463', '#140D0A'] as [string, string],
     meta: '15 de setembro · Leitura de 2 min',
@@ -46,7 +51,7 @@ export function BlogSection() {
         {POSTS.map((post) => (
           <article key={post.title} className="flex flex-col overflow-hidden rounded-lg bg-surface-card">
             <div className="aspect-[268/195]">
-              <NftArt seed={post.seed} palette={post.palette} title="" />
+              <NftArt src={post.image} seed={post.seed} palette={post.palette} title="" />
             </div>
             <div className="flex flex-1 flex-col gap-2 p-4">
               <p className="text-[12px] font-medium text-text-secondary">{post.meta}</p>

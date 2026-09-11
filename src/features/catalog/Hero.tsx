@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { NftArt } from '@/components/nft/NftArt'
+import { NFT_ARTWORKS } from '@/mocks/fixtures'
 
 export function Hero() {
   return (
@@ -31,10 +32,10 @@ export function Hero() {
             </div>
             <div className="relative h-[138px] w-[138px] shrink-0">
               <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                <NftArt seed={4242} palette={['#E89B55', '#140D0A']} title="Destaque da Kurio" />
+                <NftArt src={NFT_ARTWORKS[0]} sizes="(min-width: 768px) 450px, 138px" seed={4242} palette={['#E89B55', '#140D0A']} title="Destaque da Kurio" />
               </div>
               <div className="absolute -bottom-2 -left-3 h-[58px] w-[58px] overflow-hidden rounded-2xl border-2 border-surface-dark">
-                <NftArt seed={17} palette={['#D28A4C', '#241612']} title="" />
+                <NftArt src={NFT_ARTWORKS[1]} seed={17} palette={['#D28A4C', '#241612']} title="" />
               </div>
             </div>
           </div>
@@ -64,7 +65,7 @@ export function Hero() {
           </div>
         </div>
         <div className="aspect-square overflow-hidden rounded-3xl">
-          <NftArt seed={4242} palette={['#E89B55', '#140D0A']} title="Destaque da Kurio" />
+          <NftArt src={NFT_ARTWORKS[0]} sizes="(min-width: 768px) 450px, 138px" seed={4242} palette={['#E89B55', '#140D0A']} title="Destaque da Kurio" />
         </div>
       </div>
     </section>

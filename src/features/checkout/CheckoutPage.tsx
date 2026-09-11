@@ -275,7 +275,7 @@ export function CheckoutPage() {
               return (
                 <li key={item.nftId} className="flex items-center gap-3">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md">
-                    <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
+                    <NftArt src={item.nft.imageUrl} seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-body font-bold text-foreground">{item.nft.name}</p>
