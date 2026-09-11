@@ -10,7 +10,7 @@ test.describe('Carrinho', () => {
     await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await expect(page).toHaveURL(/\/cart/)
 
-    const row = page.locator('tbody tr').first()
+    const row = page.locator('[data-testid="cart-item"]').first()
     await expect(row).toBeVisible()
 
     const increaseBtn = row.locator('button[aria-label^="Aumentar quantidade"]')
@@ -48,17 +48,17 @@ test.describe('Carrinho', () => {
     await page.locator('a[href^="/nft/"]').first().click()
     await page.getByRole('button', { name: /COMPRAR|Comprar NFT/ }).click()
     await expect(page).toHaveURL(/\/cart/)
-    await expect(page.locator('tbody tr')).toHaveCount(1)
-    const nftName = (await page.locator('tbody tr').first().locator('td').first().locator('a').innerText()).trim()
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1)
+    const nftName = (await page.locator('[data-testid="cart-item-name"]').first().innerText()).trim()
 
     await page.reload()
-    await expect(page.locator('tbody tr')).toHaveCount(1)
-    await expect(page.locator('tbody')).toContainText(nftName)
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1)
+    await expect(page.locator('[data-testid="cart-item"]').first()).toContainText(nftName)
 
     await loginAs(page, SEED_USERS.marcos, '/cart')
     await expect(page).toHaveURL(/\/cart/)
-    await expect(page.locator('tbody tr')).toHaveCount(1) // carrinho de visitante migrou para a conta
-    await expect(page.locator('tbody')).toContainText(nftName)
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1) // carrinho de visitante migrou para a conta
+    await expect(page.locator('[data-testid="cart-item"]').first()).toContainText(nftName)
   })
 
   test('resumo reflete subtotal, taxa de rede e total coerentes com a API', async ({ page }) => {

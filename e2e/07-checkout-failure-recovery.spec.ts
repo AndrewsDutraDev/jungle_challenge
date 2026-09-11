@@ -28,7 +28,7 @@ test.describe('Checkout — falhas e recuperação', () => {
 
     await page.getByRole('link', { name: 'Voltar ao carrinho' }).click()
     await expect(page).toHaveURL(/\/cart/)
-    await expect(page.locator('tbody tr')).toHaveCount(1)
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1)
   })
 
   test('clique repetido em "Confirmar compra" não duplica o pedido', async ({ page }) => {

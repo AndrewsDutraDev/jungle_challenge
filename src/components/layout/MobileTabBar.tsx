@@ -20,8 +20,9 @@ export function MobileTabBar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [term, setTerm] = useState('')
 
-  // O detalhe do NFT tem barra de compra própria; entrar/criar conta ocupam a tela inteira.
-  if (pathname.startsWith('/nft/') || pathname === '/login' || pathname === '/signup') return null
+  // Telas com rodapé próprio (barra de compra, resumo do carrinho) ou que ocupam a tela inteira.
+  const HIDDEN_ON = ['/login', '/signup', '/cart']
+  if (pathname.startsWith('/nft/') || HIDDEN_ON.includes(pathname)) return null
 
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0
 

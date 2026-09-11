@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Minus, Plus, Trash2, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { useCartQuery, useApplyCouponMutation, useRemoveCartItemMutation, useRemoveCouponMutation, useUpdateCartItemMutation } from '@/lib/api/cart'
 import { useQuoteQuery } from '@/lib/api/quote'
 import { useNftListQuery } from '@/lib/api/nfts'
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { OrderTotals } from './OrderTotals'
 import { formatEth } from '@/lib/format'
 import { KurioApiError } from '@/lib/api/client'
+import { useIsMobile } from '@/lib/use-media-query'
 
 export function CartPage() {
   const { data: session } = useSessionQuery()
@@ -24,6 +25,7 @@ export function CartPage() {
   const applyCoupon = useApplyCouponMutation()
   const removeCoupon = useRemoveCouponMutation()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   const [couponInput, setCouponInput] = useState('')
   const [couponError, setCouponError] = useState<string | null>(null)
@@ -48,6 +50,145 @@ export function CartPage() {
   }
 
   const isEmpty = !isLoading && (!cart || cart.items.length === 0)
+
+  /*
+    O carrinho mobile do Figma (node 16:360) não é a tabela reflowed: é uma
+    lista de cards com a arte à esquerda e o resumo numa folha arredondada
+    colada no rodapé.
+  */
+  if (isMobile && !isEmpty) {
+    return (
+      <div className="flex min-h-[calc(100vh-68px)] flex-col">
+        <div className="flex-1 px-4 pt-8">
+          <div className="flex h-11 items-center">
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              aria-label="Voltar"
+              className="flex size-[35px] shrink-0 items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+            <h1 className="flex-1 pr-[35px] text-center text-[20px] font-bold leading-4 text-foreground">Carrinho de NFTs</h1>
+          </div>
+
+          {isLoading && (
+            <div className="mt-3 space-y-5">
+              <Skeleton className="h-[100px] w-full rounded-[14px]" />
+              <Skeleton className="h-[100px] w-full rounded-[14px]" />
+            </div>
+          )}
+
+          <ul className="mt-3 space-y-5">
+            {cart?.items.map((item) => {
+              const line = quote?.lines.find((l) => l.nftId === item.nftId)
+              return (
+                <li
+                  key={item.nftId}
+                  data-testid="cart-item"
+                  className="flex h-[100px] overflow-hidden rounded-[14px] bg-surface-card shadow-card"
+                >
+                  <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="size-[100px] shrink-0">
+                    <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
+                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-2">
+                    <p data-testid="cart-item-name" className="truncate text-[15px] font-bold leading-4 text-foreground">{item.nft.name}</p>
+                    <p className="whitespace-nowrap text-[14px] leading-4 text-text-secondary">
+                      Edição: {item.nft.editionIndex}/{item.nft.editionSize}
+                    </p>
+                    <p className="text-[18px] font-bold leading-4 text-text-accent">
+                      {formatEth(line?.subtotalEth ?? Number(item.nft.priceEth) * item.quantity)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1 pr-2">
+                    <button
+                      type="button"
+                      className="flex size-6 items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary disabled:opacity-40"
+                      disabled={item.quantity <= 1}
+                      onClick={() => updateItem.mutate({ nftId: item.nftId, quantity: item.quantity - 1 })}
+                      aria-label={`Diminuir quantidade de ${item.nft.name}`}
+                    >
+                      <Minus className="size-3.5" />
+                    </button>
+                    <span className="min-w-4 text-center text-[16px] leading-[22px] text-foreground" aria-live="polite">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      className="flex size-6 items-center justify-center rounded-full border border-border bg-surface-raised text-text-primary disabled:opacity-40"
+                      disabled={item.quantity >= item.nft.editionsAvailable}
+                      onClick={() => updateItem.mutate({ nftId: item.nftId, quantity: item.quantity + 1 })}
+                      aria-label={`Aumentar quantidade de ${item.nft.name}`}
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeItem.mutate(item.nftId)}
+                      aria-label={`Remover ${item.nft.name} do carrinho`}
+                      className="flex size-6 items-center justify-center rounded-full text-text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        <aside className="mt-6 flex flex-col gap-6 rounded-t-[40px] bg-surface-card px-6 pb-9 pt-6">
+          <form onSubmit={handleApplyCoupon} className="flex h-[50px] items-center overflow-hidden rounded-[40px] border border-border shadow-card">
+            <label htmlFor="coupon" className="sr-only">
+              Código promocional
+            </label>
+            <Input
+              id="coupon"
+              value={couponInput}
+              onChange={(e) => setCouponInput(e.target.value)}
+              placeholder="Digite o código promocional…"
+              aria-invalid={Boolean(couponError)}
+              aria-describedby={couponError ? 'coupon-error' : undefined}
+              className="h-full flex-1 rounded-none border-0 bg-transparent pl-4 text-caption placeholder:text-secondary focus-visible:ring-0"
+            />
+            <Button
+              type="submit"
+              className="h-full w-[97px] shrink-0 rounded-[40px] text-[15px] font-bold"
+              disabled={applyCoupon.isPending || !couponInput}
+            >
+              Aplicar
+            </Button>
+          </form>
+          {couponError && (
+            <p id="coupon-error" role="alert" className="-mt-4 text-tiny text-danger">
+              {couponError}
+            </p>
+          )}
+          {cart?.couponCode && (
+            <p className="-mt-4 flex items-center gap-2 text-tiny text-success">
+              Cupom {cart.couponCode} aplicado.
+              <button type="button" className="underline" onClick={() => removeCoupon.mutate()}>
+                remover
+              </button>
+            </p>
+          )}
+
+          <OrderTotals quote={quote} isLoading={quoteLoading} />
+
+          {quote?.isStale && (
+            <p className="flex items-start gap-2 rounded-md bg-warning/10 p-2.5 text-tiny text-warning">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              Alguns preços ou disponibilidades mudaram. Revise antes de continuar.
+            </p>
+          )}
+
+          <Button className="h-[60px] w-full rounded-[40px] text-[16px] font-bold" onClick={handleCheckout} disabled={quoteLoading}>
+            Conectar e finalizar
+          </Button>
+        </aside>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-10">
@@ -107,14 +248,14 @@ export function CartPage() {
                 {cart.items.map((item) => {
                   const line = quote?.lines.find((l) => l.nftId === item.nftId)
                   return (
-                    <tr key={item.nftId} className="bg-surface-card">
+                    <tr key={item.nftId} data-testid="cart-item" className="bg-surface-card">
                       <td className="py-0">
                         <div className="flex items-center gap-4">
                           <div className="size-[70px] shrink-0 overflow-hidden rounded-md">
                             <NftArt seed={item.nft.seed} palette={item.nft.palette} title={item.nft.name} />
                           </div>
                           <div className="py-2">
-                            <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="text-[16px] font-bold leading-4 text-foreground hover:text-text-accent">
+                            <Link data-testid="cart-item-name" to="/nft/$nftId" params={{ nftId: item.nftId }} className="text-[16px] font-bold leading-4 text-foreground hover:text-text-accent">
                               {item.nft.name}
                             </Link>
                             <p className="mt-1.5 text-[14px] leading-4 text-secondary">ID do token: #{item.nft.tokenId}</p>
